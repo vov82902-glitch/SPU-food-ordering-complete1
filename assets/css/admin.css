@@ -8,14 +8,14 @@
     --pink: #e879a8;
     --pink-dark: #c94f83;
     --pink-deep: #a83c6c;
-    --pink-soft: #bd1558;
-    --pink-pale: #b31559;
+    --pink-soft: #4d3840;
+    --pink-pale: #361c27;
     --accent: #f4a6c4;
     --text: #49343e;
     --muted: #8b7881;
     --white: #ffffff;
     --page: #fff7fa;
-    --border: #f2dce6;
+    --border: #d13f81;
     --shadow: 0 12px 32px rgba(171,75,119,0.10);
     --shadow-sm: 0 5px 17px rgba(120,60,85,0.05);
     --green: #1f7a43;
@@ -61,7 +61,7 @@ button, input, select, textarea { font-family: inherit; font-size: 15px; }
     transition: 0.3s;
 }
 .btn.primary {
-    color: white;
+    color: rgb(170, 28, 28);
     background: var(--pink-dark);
 }
 .btn.primary:hover { background: var(--pink-deep); }
