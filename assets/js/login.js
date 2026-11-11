@@ -88,12 +88,9 @@ function login(event, form) {
             return;
         }
 
-        // บัญชีที่สมัครด้วยโซเชียล (ไม่มีรหัสผ่าน)
+        // บัญชีเก่าที่ไม่มีรหัสผ่าน (เคยสมัครด้วยโซเชียลซึ่งเลิกใช้แล้ว)
         if (!account.pass) {
-            let via = Object.keys(account.social || {}).map(function (p) {
-                return { facebook: 'Facebook', x: 'X', line: 'LINE' }[p] || p;
-            }).join(', ');
-            showLoginError('บัญชีนี้สมัครด้วย ' + esc(via) + ' กรุณากดปุ่ม ' + esc(via) + ' ด้านล่าง');
+            showLoginError('บัญชีนี้ยังไม่มีรหัสผ่าน กรุณาติดต่อเจ้าหน้าที่โรงอาหารเพื่อตั้งรหัสผ่าน');
             return;
         }
 

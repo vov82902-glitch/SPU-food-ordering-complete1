@@ -42,12 +42,6 @@ function verifyMessage(html) {
     });
 });
 
-function socialLabel(account) {
-    return Object.keys(account.social || {}).map(function (p) {
-        return { facebook: 'Facebook', x: 'X', line: 'LINE' }[p] || p;
-    }).join(', ');
-}
-
 verifyForm.addEventListener('submit', function (event) {
     event.preventDefault();
     let student = document.getElementById('fp-student').value.trim();
@@ -66,8 +60,7 @@ verifyForm.addEventListener('submit', function (event) {
 
     let account = loadStudents()[student];
     if (account && !account.pass) {
-        let via = socialLabel(account);
-        verifyMessage('บัญชีนี้สมัครด้วย ' + esc(via) + ' ไม่ต้องใช้รหัสผ่าน <a href="index.html?student=' + student + '">เข้าสู่ระบบด้วยปุ่ม ' + esc(via) + '</a>');
+        verifyMessage('บัญชีนี้ยังไม่มีรหัสผ่าน กรุณาติดต่อเจ้าหน้าที่โรงอาหารเพื่อตั้งรหัสผ่าน');
         return;
     }
     if (account && !account.phone) {

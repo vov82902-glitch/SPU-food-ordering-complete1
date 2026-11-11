@@ -496,7 +496,7 @@ function getCurrentUser() {
     }
 }
 
-// บันทึกว่าใครเข้าสู่ระบบ (ใช้ตอนล็อกอิน / สมัครสมาชิก / ล็อกอินด้วยโซเชียล)
+// บันทึกว่าใครเข้าสู่ระบบ (ใช้ตอนล็อกอิน / สมัครสมาชิก)
 function setCurrentUser(name, student) {
     let oldUser = getCurrentUser();
 
