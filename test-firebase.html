@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ทดลอง Firebase</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 480px; margin: 40px auto; padding: 0 16px; }
+    input { padding: 8px; width: 60%; }
+    button { padding: 8px 16px; }
+    #status { color: #888; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>ทดลองสั่งอาหาร</h1>
+  <p id="status">กำลังเชื่อมต่อ Firebase...</p>
+  <input id="food" placeholder="ชื่ออาหาร">
+  <button id="send">สั่ง</button>
+  <ul id="list"></ul>
+
+  <script type="module">
+    // 1) โหลด Firebase จากอินเทอร์เน็ต
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, orderBy, query }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // 2) config ของโปรเจกต์ spu-food
+    const firebaseConfig = {
+      apiKey: "AIzaSyCa90Ja6UBUMtfJcXq47m_H1WZdlnBgPn8",
+      authDomain: "spu-food-ee25a.firebaseapp.com",
+      projectId: "spu-food-ee25a",
+      storageBucket: "spu-food-ee25a.firebasestorage.app",
+      messagingSenderId: "526098006581",
+      appId: "1:526098006581:web:bba7da240d253e1803a77c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const status = document.getElementById("status");
+
+    // 3) บันทึกข้อมูล = addDoc (เหมือน localStorage.setItem แต่ไปเก็บบนคลาวด์)
+    document.getElementById("send").onclick = async () => {
+      const input = document.getElementById("food");
+      const name = input.value.trim();
+      if (!name) return;
+      try {
+        await addDoc(collection(db, "orders"), { food: name, createdAt: Date.now() });
+        input.value = "";
+      } catch (err) {
+        status.textContent = "บันทึกไม่ได้: " + err.message;
+      }
+    };
+
+    // 4) ฟังข้อมูลแบบ real-time = onSnapshot (มีออเดอร์ใหม่ หน้านี้อัปเดตเองทันที)
+    const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+    onSnapshot(q, (snap) => {
+      status.textContent = "เชื่อมต่อแล้ว ✅ มี " + snap.size + " ออเดอร์";
+      document.getElementById("list").innerHTML =
+        snap.docs.map(d => "<li>" + d.data().food + "</li>").join("");
+    }, (err) => {
+      status.textContent = "เชื่อมต่อไม่ได้: " + err.message;
+    });
+  </script>
+</body>
+</html>
