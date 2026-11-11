@@ -124,7 +124,7 @@ let foodData = [
 
 /* ==========================================================
    ส่วนที่ใช้ร่วมกันระหว่าง "หน้าลูกค้า" และ "หน้าร้านค้า (merchant)"
-   ข้อมูลทั้งหมดเก็บใน localStorage (เป็นระบบทดสอบ ไม่มีเซิร์ฟเวอร์)
+   ข้อมูลเก็บใน localStorage และซิงก์ขึ้น Firebase Firestore ผ่าน cloud.js
 
    food_data    : เมนูที่ร้านแก้ไขแล้ว (ถ้าไม่มีจะใช้ foodData ด้านบน)
    food_stores  : ตั้งค่าแต่ละร้าน { รหัสร้าน, PIN, เปิด/ปิด, ตัวอักษรคิว, เลขคิวล่าสุด }
@@ -150,6 +150,7 @@ function loadFoodData() {
 
 function saveFoodData() {
     localStorage.setItem('food_data', JSON.stringify(foodData));
+    if (window.cloudSave) cloudSave('food_data', foodData);   // ส่งขึ้น Firebase (cloud.js)
 }
 
 loadFoodData();
@@ -198,6 +199,7 @@ function getStoreConfigs() {
 
 function saveStoreConfigs(configs) {
     localStorage.setItem('food_stores', JSON.stringify(configs));
+    if (window.cloudSave) cloudSave('food_stores', configs);   // ส่งขึ้น Firebase (cloud.js)
 }
 
 function dateKey(ts) {
@@ -317,6 +319,7 @@ function loadOrders() {
 
 function saveOrders(orders) {
     localStorage.setItem('food_orders', JSON.stringify(orders));
+    if (window.cloudSave) cloudSave('food_orders', orders);   // ส่งขึ้น Firebase (cloud.js)
 }
 
 /* ---------- เครื่องมือแสดงผล ---------- */
@@ -436,6 +439,7 @@ function loadStudents() {
 
 function saveStudents(list) {
     localStorage.setItem('food_students', JSON.stringify(list));
+    if (window.cloudSave) cloudSave('food_students', list);   // ส่งขึ้น Firebase (cloud.js)
 }
 
 /* ---------- กันเดาข้อมูลกู้รหัสผ่าน: ผิด 5 ครั้ง พัก 60 วินาที ---------- */

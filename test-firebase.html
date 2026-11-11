@@ -44,7 +44,7 @@
       const name = input.value.trim();
       if (!name) return;
       try {
-        await addDoc(collection(db, "orders"), { food: name, createdAt: Date.now() });
+        await addDoc(collection(db, "test"), { food: name, createdAt: Date.now() });
         input.value = "";
       } catch (err) {
         status.textContent = "บันทึกไม่ได้: " + err.message;
@@ -52,7 +52,7 @@
     };
 
     // 4) ฟังข้อมูลแบบ real-time = onSnapshot (มีออเดอร์ใหม่ หน้านี้อัปเดตเองทันที)
-    const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "test"), orderBy("createdAt", "desc"));
     onSnapshot(q, (snap) => {
       status.textContent = "เชื่อมต่อแล้ว ✅ มี " + snap.size + " ออเดอร์";
       document.getElementById("list").innerHTML =

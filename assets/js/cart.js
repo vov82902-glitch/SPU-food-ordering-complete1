@@ -180,5 +180,5 @@ function placeOrder() {
     localStorage.removeItem('food_cart');
     // แจ้งผลในหน้าคิวแทนกล่องข้อความ
     sessionStorage.setItem('food_placed', queues.join(', '));
-    location.href = anyQr ? 'queue.html?pay=1' : 'queue.html';
+    cloudGo(anyQr ? 'queue.html?pay=1' : 'queue.html');   // รอบันทึกขึ้น Firebase ก่อนเปลี่ยนหน้า
 }

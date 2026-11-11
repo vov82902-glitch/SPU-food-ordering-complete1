@@ -110,5 +110,5 @@ regForm.addEventListener('submit', function (event) {
 
     // สมัครเสร็จ เข้าสู่ระบบให้เลย
     setCurrentUser(name, student);
-    location.href = 'floors.html?welcome=1';
+    cloudGo('floors.html?welcome=1');   // รอบันทึกขึ้น Firebase ก่อนเปลี่ยนหน้า
 });
