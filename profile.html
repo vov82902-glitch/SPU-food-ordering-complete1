@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPU Food • ข้อมูลของฉัน</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@500;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="bar">
+            <a class="brand" href="floors.html">
+                <span class="brand-mark">SPU</span>
+                <span class="brand-text"><b>SPU Food</b><small>ระบบสั่งอาหารออนไลน์</small></span>
+            </a>
+            <nav class="nav">
+                <a href="floors.html">เลือกชั้น</a>
+                <a href="cart.html">ตะกร้า <span id="cart-count" class="count">0</span></a>
+                <a href="queue.html">คิวของฉัน</a>
+                <a href="profile.html" class="active">ข้อมูลของฉัน</a>
+                <button onclick="logout()">ออกจากระบบ</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="content">
+        <div class="page-head">
+            <h2>ข้อมูลของฉัน</h2>
+            <p>ข้อมูลบัญชีและประวัติการสั่งอาหารทั้งหมด</p>
+        </div>
+
+        <!-- ข้อมูลส่วนตัว (เติมด้วย profile.js) -->
+        <section class="profile-card">
+            <div class="profile-avatar" id="avatar">?</div>
+            <dl class="profile-info">
+                <dt>ชื่อ-นามสกุล</dt>    <dd id="info-name">-</dd>
+                <dt>รหัสนักศึกษา</dt>    <dd id="info-student">-</dd>
+                <dt>เบอร์โทร</dt>        <dd id="info-phone">-</dd>
+                <dt>สมัครสมาชิกเมื่อ</dt> <dd id="info-joined">-</dd>
+            </dl>
+        </section>
+
+        <!-- สรุปยอด -->
+        <section class="profile-stats">
+            <div><small>สั่งไปแล้ว</small><b id="stat-count">0</b><span>ออเดอร์</span></div>
+            <div><small>ยอดใช้จ่ายรวม</small><b id="stat-total">0</b><span>บาท</span></div>
+            <div><small>ร้านที่สั่งบ่อยสุด</small><b id="stat-store">-</b></div>
+        </section>
+
+        <!-- ประวัติการสั่ง -->
+        <h3 class="profile-title">ประวัติการสั่งอาหาร</h3>
+        <div id="history-list"></div>
+    </main>
+
+    <footer class="site-footer"><b>SPU Food Ordering</b> · รับชำระเงินสดและ QR พร้อมเพย์</footer>
+    <script src="assets/js/cloud.js" data-load="assets/js/main.js assets/js/profile.js"></script>
+</body>
+</html>
