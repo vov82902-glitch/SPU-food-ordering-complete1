@@ -567,42 +567,8 @@ label { display: block; color: var(--text); font-weight: bold; font-size: 14px; 
 .panel td .btn { padding: 7px 12px; font-size: 13px; margin: 2px 0; }
 .badge.cancelled, .pill-cancelled { background: var(--red-bg); color: var(--red); }
 
-/* การรับชำระเงิน */
-.pay-settings { margin: 4px 0 18px; padding: 16px 16px 0; border: 1px solid var(--border); border-radius: 14px; }
-.pay-settings legend { padding: 0 6px; color: var(--pink-deep); font-weight: bold; }
-.pay-toggles { display: flex; flex-wrap: wrap; gap: 10px 24px; margin-bottom: 14px; }
-.check { display: inline-flex; align-items: center; gap: 8px; font-weight: normal; cursor: pointer; }
-.check input { width: 18px; height: 18px; margin: 0; accent-color: var(--pink-dark); }
-.qr-field { background: white; }
-.image-preview.qr-preview { width: 150px; height: 150px; object-fit: contain; background: white; }
-.pay-method { color: var(--muted); font-size: 13px; }
+.badge.noshow { background: #f3e9cf; color: #6b4f00; }
 .panel td .text-btn { padding: 2px 0; font-size: 13px; }
-
-.slip-dialog {
-    position: fixed;
-    inset: 0;
-    z-index: 900;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    background: rgba(40,20,30,0.45);
-}
-.slip-dialog.hidden { display: none; }
-.slip-box {
-    width: 100%;
-    max-width: 420px;
-    max-height: calc(100vh - 32px);
-    overflow-y: auto;
-    padding: 20px;
-    background: white;
-    border-radius: 14px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-}
-.slip-box h3 { margin: 0 0 4px; }
-.slip-box p { margin: 0 0 12px; font-size: 14px; }
-.slip-box img { display: block; width: 100%; max-height: 60vh; object-fit: contain; margin-bottom: 14px; background: #faf6f8; border: 1px solid var(--border); border-radius: 10px; }
-.slip-box .form-actions { flex-wrap: wrap; }
 
 footer {
     margin-top: auto;
@@ -681,14 +647,17 @@ tr.late td { background: #fdecec; }
 .opt-check { display: inline-flex; align-items: center; gap: 6px; margin: 0 16px 8px 0; font-weight: normal; }
 .opt-check input { width: auto; }
 
-/* ---------- กระดานออเดอร์ 3 คอลัมน์ (admin-board.js) ---------- */
-.board {
+
+/* ---------- กระดานออเดอร์ (admin-board.js) ---------- */
+.board-tabs { display: none; }   /* แท็บใช้เฉพาะมือถือ (ดูด้านล่าง) */
+.board-columns {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 16px;
     align-items: start;
 }
 .board-column {
+    min-width: 0;
     padding: 12px;
     background: #fbf3f7;
     border-radius: 14px;
@@ -715,39 +684,132 @@ tr.late td { background: #fdecec; }
     padding: 14px;
     background: white;
     border: 1px solid #ecd6e0;
-    border-radius: 12px;
+    border-radius: 14px;
     box-shadow: var(--shadow-sm);
 }
 .order-card.late { border: 2px solid #c62828; background: #fff6f6; }
-.card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.card-head { display: flex; align-items: center; gap: 8px; }
 .card-queue { color: var(--pink-deep); font-size: 30px; font-weight: 800; letter-spacing: 1px; line-height: 1; }
-.card-customer { margin: 4px 0 10px; color: var(--muted); font-size: 13px; }
+.card-dishes { padding: 2px 9px; color: var(--pink-deep); background: #fbe8f1; border-radius: 99px; font-size: 13px; font-weight: 700; }
+.card-head .countdown { margin-left: auto; }
+.card-customer { margin: 6px 0 4px; color: var(--muted); font-size: 13px; }
+.card-warn { display: inline-block; padding: 1px 7px; color: #7a5200; background: #fff4d6; border-radius: 6px; font-weight: 700; font-size: 12px; }
 
-/* รายการอาหารในการ์ด */
-.card-items { margin: 0; padding: 10px 0; list-style: none; border-top: 1px dashed #e3c9d5; border-bottom: 1px dashed #e3c9d5; }
-.card-items li { display: flex; gap: 10px; padding: 5px 0; }
-.card-qty { flex: none; min-width: 34px; color: var(--pink-deep); font-size: 18px; font-weight: 800; }
-.card-items b { display: block; font-size: 16px; }
-.card-options { display: block; color: #1d4ed8; font-weight: 700; font-size: 14px; }
+/* รายการอาหาร: จำนวนในวงกลม + ตัวเลือกบรรทัดละอย่าง */
+.card-items { margin: 0; padding: 0; list-style: none; }
+.card-items > li { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid #f1e2e9; }
+.card-qty {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    color: white;
+    background: var(--pink-dark);
+    border-radius: 50%;
+    font-size: 17px;
+    font-weight: 800;
+}
+.card-items b { display: block; font-size: 17px; line-height: 1.3; }
+.card-options { margin: 4px 0 0; padding: 0; list-style: none; }
+.card-options li { color: #1d4ed8; font-size: 15px; font-weight: 700; }
+.card-options li::before { content: "• "; }
 .card-note {
-    display: block;
-    margin-top: 4px;
-    padding: 4px 8px;
+    display: inline-block;
+    margin-top: 6px;
+    padding: 4px 10px;
     color: #7a5200;
     background: #fff4d6;
-    border-radius: 6px;
-    font-size: 13px;
+    border-radius: 7px;
+    font-size: 14px;
+    font-weight: 700;
 }
 
-/* ชำระเงิน + ปุ่ม */
-.card-pay { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin: 10px 0; font-size: 13px; }
-.card-total { font-size: 18px; white-space: nowrap; }
-.card-actions { display: flex; gap: 8px; }
-.card-actions .btn { flex: 1; padding: 12px 10px; font-size: 15px; }
-.card-actions .btn.primary { flex: 2; }
+/* เงินที่ต้องเก็บ */
+.card-money {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 6px 0 10px;
+    padding: 8px 12px;
+    color: #7a5200;
+    background: #fff4d6;
+    border-radius: 10px;
+    font-weight: 700;
+}
+.card-money b { font-size: 18px; }
+
+/* ปุ่ม: ปุ่มหลักเต็มความกว้าง / ปุ่มรองเป็นลิงก์เล็ก */
+.card-main { width: 100%; padding: 13px 10px; font-size: 16px; }
+.card-links { display: flex; justify-content: center; gap: 18px; margin-top: 6px; }
+.card-links .text-btn { font-size: 13px; color: var(--muted); text-decoration: underline; }
 
 .history-toolbar { margin-top: 28px; }
 
+/* ---------- มือถือ: แท็บแทน 3 คอลัมน์ ---------- */
+@media screen and (max-width: 700px) {
+    .board-tabs {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        display: flex;
+        margin: 0 -16px 12px;
+        background: white;
+        border-bottom: 1px solid #ecd6e0;
+    }
+    .board-tab {
+        flex: 1;
+        padding: 12px 4px 9px;
+        color: var(--muted);
+        background: none;
+        border: none;
+        border-bottom: 3px solid transparent;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .board-tab i {
+        display: inline-block;
+        min-width: 20px;
+        padding: 0 6px;
+        color: white;
+        border-radius: 99px;
+        font-size: 12px;
+        font-style: normal;
+    }
+    .board-tab.tab-new i     { background: #f0a500; }
+    .board-tab.tab-cooking i { background: #3b82f6; }
+    .board-tab.tab-ready i   { background: #22a35a; }
+    .board-tab.is-active { color: var(--text); border-bottom-color: var(--pink-dark); }
+
+    .board-columns { grid-template-columns: 1fr; }
+    .board-column { padding: 0; background: none; border-top: none; }
+    .board-column h3 { display: none; }               /* แท็บบอกชื่อแล้ว */
+    .board-column:not(.is-active) { display: none; }  /* โชว์ทีละคอลัมน์ */
+}
+
+/* ---------- มือถือ: แถบบนเหลือบรรทัดเดียว เมนูซ่อนใน ☰ ---------- */
+.menu-toggle { display: none; }
 @media screen and (max-width: 900px) {
-    .board { grid-template-columns: 1fr; }
+    .sidebar { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 14px; }
+    .side-brand { order: 1; flex: 0 0 auto; padding: 0; }
+    .side-brand > div { display: none; }               /* ซ่อนคำว่า Merchant */
+    .store-chip { order: 2; flex: 1 1 auto; margin: 0; padding: 6px 10px; }
+    .menu-toggle {
+        display: block;
+        order: 3;
+        margin-left: auto;
+        padding: 4px 12px;
+        color: white;
+        background: rgba(255,255,255,0.18);
+        border: none;
+        border-radius: 10px;
+        font-size: 22px;
+        cursor: pointer;
+    }
+
+    .sidebar nav, .sidebar-bottom { order: 4; flex-basis: 100%; display: none; }
+    .sidebar.open nav, .sidebar.open .sidebar-bottom { display: flex; }   /* กด ☰ แล้วค่อยโชว์ */
+    .topbar { margin-bottom: 12px; }
+    .topbar .eyebrow, .live-pill { display: none; }
 }

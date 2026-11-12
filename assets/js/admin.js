@@ -10,7 +10,8 @@ const ADMIN_STATUS = {
     cooking: 'กำลังทำ',
     ready: 'พร้อมรับ',
     done: 'สำเร็จ',
-    cancelled: 'ยกเลิก'
+    cancelled: 'ยกเลิก',
+    noshow: 'ไม่มารับ'
 };
 const VIEW_TITLES = {
     overview: 'ภาพรวมร้านค้า',
@@ -24,7 +25,6 @@ let adminStore = null;      // ร้านที่ล็อกอินอย�
 let currentView = 'overview';
 let lastOrdersRaw = null;
 let seenOrderIds = null;
-let seenSlips = [];
 let pollTimer = null;
 let toastTimer = null;
 
@@ -113,8 +113,6 @@ function startApp(storeId) {
     $('login-screen').classList.add('hidden');
     $('app').classList.remove('hidden');
     seenOrderIds = adminOrders().map(function (o) { return o.id; });
-    seenSlips = adminOrders().filter(function (o) { return payInfo(o).status === 'pending'; })
-        .map(function (o) { return o.id + payInfo(o).sentAt; });
     lastOrdersRaw = null;
     showView('orders');   // เปิดมาเจอกระดานออเดอร์เลย
     renderAll();
@@ -186,28 +184,14 @@ function renderOverview(orders, count) {
         : '';
 }
 
-// ช่องการชำระเงินในตาราง
-function payCell(o) {
-    let p = payInfo(o);
-    let cls = p.status === 'paid' ? 'ready' : p.status === 'pending' ? 'cooking' : 'new';
-    let h = '<span class="pay-method">' + PAY_METHOD_TEXT[p.method] + '</span><br>' +
-        '<span class="badge ' + cls + '">' + PAY_STATUS_TEXT[p.status] + '</span>';
-    if (o.status === 'cancelled') return h;
-    if (p.status === 'pending') {
-        h += '<br><button class="text-btn" data-pay="slip" data-id="' + o.id + '">ตรวจสลิป →</button>';
-    } else if (p.status === 'unpaid') {
-        h += '<br><button class="text-btn" data-pay="paid" data-id="' + o.id + '">รับเงินแล้ว</button>';
-    }
-    return h;
-}
-
+// ปุ่มในตาราง (กระดานออเดอร์มีปุ่มของตัวเองใน admin-board.js)
 function actionButtons(o) {
     let b = function (act, label, cls) {
         return '<button class="btn ' + cls + '" data-act="' + act + '" data-id="' + o.id + '">' + label + '</button> ';
     };
     if (o.status === 'new') return b('accept', 'รับออเดอร์', 'primary') + b('cancel', 'ยกเลิก', 'ghost');
     if (o.status === 'cooking') return b('ready', 'ทำเสร็จ · เรียกคิว', 'primary') + b('cancel', 'ยกเลิก', 'ghost');
-    if (o.status === 'ready') return b('done', 'ลูกค้ารับแล้ว', 'primary') + b('recall', 'เรียกซ้ำ', 'ghost');
+    if (o.status === 'ready') return b('done', 'ลูกค้ารับแล้ว · รับเงิน ' + o.total + ' ฿', 'primary') + b('recall', 'เรียกซ้ำ', 'ghost') + b('noshow', 'ไม่มารับ', 'ghost');
     return '';
 }
 
@@ -221,14 +205,13 @@ function renderOrders(orders) {
     }).sort(function (a, b) { return b.createdAt - a.createdAt; });
 
     if (list.length === 0) { $('orders-container').innerHTML = ''; return; }
-    let h = '<table><thead><tr><th>คิว</th><th>ลูกค้า</th><th>รายการ</th><th>รวม</th><th>ชำระเงิน</th><th>เวลา</th><th>สถานะ</th><th></th></tr></thead><tbody>';
+    let h = '<table><thead><tr><th>คิว</th><th>ลูกค้า</th><th>รายการ</th><th>รวม</th><th>เวลา</th><th>สถานะ</th><th></th></tr></thead><tbody>';
     list.forEach(function (o) {
         // ออเดอร์ใหม่ -> โชว์นับถอยหลังใต้เลขคิว / ค้างนาน -> แถวสีแดง
         h += '<tr' + (isLate(o) ? ' class="late"' : '') + '><td><b>' + esc(o.queue) + '</b><br>' + countdownHtml(o) + '</td>' +
             '<td>' + esc(o.name || '-') + '<br><small class="muted">' + esc(o.student) + '</small></td>' +
             '<td>' + itemsText(o) + '</td>' +
             '<td>' + o.total + ' ฿</td>' +
-            '<td>' + payCell(o) + '</td>' +
             '<td>' + timeText(o.createdAt) + '</td>' +
             '<td>' + badge(o.status) + (o.cancelReason ? '<br><small class="muted">' + esc(o.cancelReason) + '</small>' : '') + '</td>' +
             '<td class="nowrap">' + actionButtons(o) + '</td></tr>';
@@ -245,10 +228,10 @@ function renderQueue(orders, count) {
     let active = orders.filter(function (o) { return o.status === 'new' || o.status === 'cooking' || o.status === 'ready'; })
         .sort(function (a, b) { return a.createdAt - b.createdAt; });
     if (active.length === 0) { $('queue-container').innerHTML = ''; return; }
-    let h = '<table><thead><tr><th>คิว</th><th>ลูกค้า</th><th>รายการ</th><th>ชำระเงิน</th><th>สถานะ</th><th></th></tr></thead><tbody>';
+    let h = '<table><thead><tr><th>คิว</th><th>ลูกค้า</th><th>รายการ</th><th>เก็บเงินสด</th><th>สถานะ</th><th></th></tr></thead><tbody>';
     active.forEach(function (o) {
         h += '<tr><td><b style="font-size:20px">' + esc(o.queue) + '</b></td><td>' + esc(o.name || o.student) + '</td>' +
-            '<td>' + itemsText(o) + '</td><td>' + o.total + ' ฿ · ' + payCell(o) + '</td><td>' + badge(o.status) + '</td><td class="nowrap">' + actionButtons(o) + '</td></tr>';
+            '<td>' + itemsText(o) + '</td><td>' + o.total + ' ฿</td><td>' + badge(o.status) + '</td><td class="nowrap">' + actionButtons(o) + '</td></tr>';
     });
     $('queue-container').innerHTML = h + '</tbody></table>';
 }
@@ -284,11 +267,6 @@ function renderSettings() {
     $('setting-phone').value = cfg.phone || '';
     $('setting-open').value = cfg.open ? 'open' : 'closed';
     storeImage.set(adminStore.image || '');
-    $('setting-cash').checked = cfg.acceptCash !== false;
-    $('setting-qr').checked = cfg.acceptQr !== false && !!cfg.qrImage;
-    $('setting-pay-name').value = cfg.payName || '';
-    $('setting-pay-number').value = cfg.payNumber || '';
-    qrImage.set(cfg.qrImage || '');
 }
 
 /* ---------- ตรวจออเดอร์ใหม่ (จากแท็บลูกค้า) ---------- */
@@ -303,14 +281,6 @@ function checkChanges() {
         if (adminConfig().sound) beep(3);
         desktopNotify('ออเดอร์ใหม่', adminStore.name + ' · คิว ' + fresh.map(function (o) { return o.queue; }).join(', '));
     }
-    let slips = adminOrders().filter(function (o) {
-        return payInfo(o).status === 'pending' && seenSlips.indexOf(o.id + payInfo(o).sentAt) === -1;
-    });
-    slips.forEach(function (o) { seenSlips.push(o.id + payInfo(o).sentAt); });
-    if (slips.length > 0 && fresh.length === 0) {
-        adminToast('ลูกค้าส่งสลิปโอนเงิน: คิว ' + slips.map(function (o) { return o.queue; }).join(', '));
-        if (adminConfig().sound) beep(2);
-    }
     renderAll();
 }
 
@@ -322,7 +292,7 @@ function orderAct(act, id) {
     let now = Date.now();
     let allowed = {
         accept: ['new'], ready: ['new', 'cooking'], done: ['ready'],
-        cancel: ['new', 'cooking'], recall: ['ready']
+        cancel: ['new', 'cooking'], recall: ['ready'], noshow: ['ready']
     };
     if (!allowed[act] || allowed[act].indexOf(o.status) === -1) {
         adminToast('สถานะออเดอร์เปลี่ยนไปแล้ว');
@@ -331,18 +301,20 @@ function orderAct(act, id) {
     }
     if (act === 'accept') { o.status = 'cooking'; o.acceptedAt = now; }
     if (act === 'ready') { o.status = 'ready'; o.readyAt = now; if (!o.acceptedAt) o.acceptedAt = now; }
-    if (act === 'done') {
-        let p = payInfo(o);
-        if (p.status !== 'paid') {
-            let msg = p.status === 'pending'
-                ? 'ยังไม่ได้ตรวจสลิปของคิว ' + o.queue + '\nยืนยันว่าได้รับเงิน ' + o.total + ' บาทแล้ว?'
-                : 'คิว ' + o.queue + ' ยังไม่ชำระเงิน\nรับเงิน' + (p.method === 'cash' ? 'สด ' : ' ') + o.total + ' บาทแล้วใช่ไหม?';
-            if (!confirm(msg)) return;
-            o.payment = Object.assign({}, p, { status: 'paid', paidAt: now, note: '' });
-        }
-        o.status = 'done'; o.doneAt = now;
-    }
+    // ลูกค้ารับอาหาร + จ่ายเงินสดแล้ว (จ่ายที่ร้านอย่างเดียว จึงจบในปุ่มเดียว)
+    if (act === 'done') { o.status = 'done'; o.doneAt = now; }
     if (act === 'recall') { o.recalledAt = now; }
+    // ลูกค้าไม่มารับ: กดได้เมื่ออาหารพร้อมแล้วรอครบ 15 นาที (กติกาอยู่ใน noshow.js)
+    if (act === 'noshow') {
+        let wait = minutesUntilNoShow(o);
+        if (wait > 0) {
+            adminToast('ต้องรอให้ลูกค้าอีก ' + wait + ' นาที ถึงจะกด "ไม่มารับ" ได้ (ลองกด "เรียกซ้ำ" ก่อน)');
+            return;
+        }
+        if (!confirm('ยืนยันว่าลูกค้าคิว ' + o.queue + ' ไม่มารับอาหาร?\nระบบจะนับเป็น 1 ครั้ง (ครบ ' + MAX_NO_SHOW + ' ครั้งจะถูกพักการสั่ง)')) return;
+        o.status = 'noshow';
+        o.noShowAt = now;
+    }
     if (act === 'cancel') {
         let reason = prompt('เหตุผลที่ยกเลิก (ลูกค้าจะเห็นข้อความนี้)', 'วัตถุดิบหมด');
         if (reason === null) return;
@@ -355,55 +327,6 @@ function orderAct(act, id) {
     saveOrders(orders);
     if (act === 'ready' || act === 'recall') adminToast('📢 เรียกคิว ' + o.queue + ' แล้ว');
     renderAll();
-}
-
-/* ---------- การชำระเงิน ---------- */
-let slipOrderId = null;
-
-function payAct(act, id) {
-    let orders = loadOrders();
-    let o = orders.find(function (x) { return x.id === id; });
-    if (!o || o.storeId !== adminStore.id) return;
-    let p = payInfo(o);
-    let now = Date.now();
-    if (act === 'slip') { openSlip(o); return; }
-    if (act === 'paid') {
-        if (p.status === 'paid') { renderAll(); return; }
-        if (!confirm('ยืนยันได้รับเงิน' + (p.method === 'cash' ? 'สด ' : ' ') + o.total + ' บาท จากคิว ' + o.queue + '?')) return;
-        o.payment = Object.assign({}, p, { status: 'paid', paidAt: now, note: '' });
-        adminToast('บันทึกรับเงินคิว ' + o.queue + ' แล้ว');
-    }
-    if (act === 'confirm') {
-        if (p.status !== 'pending') { adminToast('สถานะการชำระเปลี่ยนไปแล้ว'); closeSlip(); renderAll(); return; }
-        o.payment = Object.assign({}, p, { status: 'paid', paidAt: now, note: '' });
-        adminToast('ยืนยันการโอนคิว ' + o.queue + ' แล้ว');
-    }
-    if (act === 'reject') {
-        if (p.status !== 'pending') { adminToast('สถานะการชำระเปลี่ยนไปแล้ว'); closeSlip(); renderAll(); return; }
-        let reason = prompt('แจ้งลูกค้าว่าสลิปมีปัญหาอะไร', 'ยอดเงินไม่ตรง กรุณาโอนใหม่หรือติดต่อร้าน');
-        if (reason === null) return;
-        o.payment = { method: 'qr', status: 'unpaid', note: reason.trim() || 'สลิปไม่ถูกต้อง', rejectedAt: now };
-        adminToast('แจ้งลูกค้าคิว ' + o.queue + ' แล้ว');
-    }
-    o.updatedAt = now;
-    saveOrders(orders);
-    closeSlip();
-    renderAll();
-}
-
-function openSlip(o) {
-    let p = payInfo(o);
-    slipOrderId = o.id;
-    $('slip-title').textContent = 'สลิปการโอน · คิว ' + o.queue;
-    $('slip-info').textContent = (o.name || o.student) + ' · ยอดที่ต้องได้รับ ' + o.total + ' บาท' +
-        (p.sentAt ? ' · ส่งเมื่อ ' + timeText(p.sentAt) : '');
-    $('slip-image').src = p.slip || '';
-    $('slip-dialog').classList.remove('hidden');
-}
-
-function closeSlip() {
-    slipOrderId = null;
-    $('slip-dialog').classList.add('hidden');
 }
 
 // เรียกคิวถัดไป: คิวที่กำลังทำเก่าสุด (ถ้าไม่มี ใช้คิวใหม่เก่าสุด) -> พร้อมรับ
@@ -477,13 +400,6 @@ function imagePicker(prefix) {
 
 let menuImage = imagePicker('menu');
 let storeImage = imagePicker('store');
-let qrImage = imagePicker('qr');
-// อัปโหลด QR ใหม่ -> เปิดรับ QR ให้อัตโนมัติ
-['qr-image-file', 'qr-image-url'].forEach(function (id) {
-    $(id).addEventListener('change', function () {
-        setTimeout(function () { if (qrImage.value) $('setting-qr').checked = true; }, 300);
-    });
-});
 
 // บันทึก foodData แบบจับกรณีพื้นที่เต็ม
 function trySaveFoodData() {
@@ -537,10 +453,6 @@ function saveSettings(event) {
     event.preventDefault();
     let name = $('setting-name').value.trim();
     if (!name) { adminToast('กรุณากรอกชื่อร้าน'); return; }
-    let acceptCash = $('setting-cash').checked;
-    let acceptQr = $('setting-qr').checked;
-    if (!acceptCash && !acceptQr) { adminToast('ต้องเปิดรับชำระเงินอย่างน้อย 1 วิธี'); return; }
-    if (acceptQr && !qrImage.value) { adminToast('กรุณาอัปโหลดรูป QR code ก่อนเปิดรับ QR'); return; }
     let store = storeInData();
     let oldName = store.name;
     store.name = name;
@@ -558,20 +470,10 @@ function saveSettings(event) {
         });
         saveOrders(orders);
     }
-    try {
-        updateAdminConfig({
-            phone: $('setting-phone').value.trim(),
-            open: $('setting-open').value === 'open',
-            acceptCash: acceptCash,
-            acceptQr: acceptQr,
-            qrImage: qrImage.value,
-            payName: $('setting-pay-name').value.trim(),
-            payNumber: $('setting-pay-number').value.trim()
-        });
-    } catch (e) {
-        adminToast('พื้นที่เก็บข้อมูลเต็ม บันทึกรูป QR ไม่ได้ ลองใช้รูปที่เล็กลง');
-        return;
-    }
+    updateAdminConfig({
+        phone: $('setting-phone').value.trim(),
+        open: $('setting-open').value === 'open'
+    });
     renderAll();
     adminToast(oldName !== name ? 'บันทึกแล้ว เปลี่ยนชื่อร้านเป็น "' + name + '"' : 'บันทึกการตั้งค่าแล้ว');
 }
@@ -593,23 +495,25 @@ $('sound-toggle').addEventListener('click', function () {
 });
 $('toast').addEventListener('click', function () { $('toast').textContent = ''; });
 
+// มือถือ: กด ☰ เปิด/ปิดเมนู
+function toggleMenu(open) {
+    document.querySelector('.sidebar').classList.toggle('open', open);
+    $('menu-toggle').setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+$('menu-toggle').addEventListener('click', function () {
+    toggleMenu(!document.querySelector('.sidebar').classList.contains('open'));
+});
+
 document.addEventListener('click', function (e) {
     let nav = e.target.closest('[data-view]');
-    if (nav) { showView(nav.dataset.view); return; }
+    if (nav) { showView(nav.dataset.view); toggleMenu(false); return; }   // เลือกเมนูแล้วพับเมนูเก็บ
     let go = e.target.closest('[data-goto]');
     if (go) { showView(go.dataset.goto); return; }
     let act = e.target.closest('[data-act]');
     if (act) { orderAct(act.dataset.act, act.dataset.id); return; }
-    let pay = e.target.closest('[data-pay]');
-    if (pay) { payAct(pay.dataset.pay, pay.dataset.id); return; }
     let m = e.target.closest('[data-menu]');
     if (m) menuAct(m.dataset.menu, m.dataset.id);
 });
-$('slip-close').addEventListener('click', closeSlip);
-$('slip-confirm').addEventListener('click', function () { if (slipOrderId) payAct('confirm', slipOrderId); });
-$('slip-reject').addEventListener('click', function () { if (slipOrderId) payAct('reject', slipOrderId); });
-$('slip-dialog').addEventListener('click', function (e) { if (e.target === this) closeSlip(); });
-document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && slipOrderId) closeSlip(); });
 
 window.addEventListener('storage', function (e) {
     if (!adminStore || (e.key && e.key.indexOf('food_') !== 0)) return;

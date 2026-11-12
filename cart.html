@@ -38,31 +38,17 @@
             <p>ตรวจสอบรายการก่อนยืนยันสั่ง</p>
         </div>
         <div id="cart-list"></div>
-        <section id="pay-section" class="pay-section" hidden>
-            <h3>วิธีชำระเงิน</h3>
-            <div class="pay-options">
-                <label class="pay-option">
-                    <input type="radio" name="pay" value="cash" checked>
-                    <span class="pay-icon pay-icon-cash" aria-hidden="true">฿</span>
-                    <span class="pay-text"><b>เงินสด</b><small>จ่ายที่ร้านตอนรับอาหาร</small></span>
-                </label>
-                <label class="pay-option">
-                    <input type="radio" name="pay" value="qr">
-                    <span class="pay-icon pay-icon-qr" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-                    <span class="pay-text"><b>สแกน QR พร้อมเพย์</b><small id="qr-hint">โอนตอนนี้ แล้วแนบสลิปในหน้าคิว</small></span>
-                </label>
-            </div>
-            <p id="pay-note" class="pay-note" hidden></p>
-        </section>
+        <!-- ถ้าสั่งไม่ได้ (โดนพัก / ค้างรับเยอะ) จะขึ้นข้อความตรงนี้ (cart.js) -->
+        <p id="block-note" class="block-note" hidden></p>
         <div class="summary">
             <div>
                 <p class="total-line">ยอดรวม <span id="total">0</span> บาท</p>
-                <p class="muted" id="pay-summary">ชำระเงินสดที่ร้าน</p>
+                <p class="muted">💵 จ่ายเงินสดที่ร้านตอนรับอาหาร</p>
             </div>
             <button id="order-button" onclick="placeOrder()">ยืนยันสั่งอาหาร</button>
         </div>
     </main>
-    <footer class="site-footer"><b>SPU Food Ordering</b> · รับชำระเงินสดและ QR พร้อมเพย์</footer>
-    <script src="assets/js/cloud.js" data-load="assets/js/main.js assets/js/cart.js"></script>
+    <footer class="site-footer"><b>SPU Food Ordering</b> · จ่ายเงินสดที่ร้าน</footer>
+    <script src="assets/js/cloud.js" data-load="assets/js/main.js assets/js/noshow.js assets/js/cart.js"></script>
 </body>
 </html>

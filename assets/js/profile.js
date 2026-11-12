@@ -78,14 +78,14 @@ function showHistory() {
         return b.createdAt - a.createdAt;
     });
 
-    // 3) สรุปยอด (ไม่นับออเดอร์ที่ถูกยกเลิก)
+    // 3) สรุปยอด (ไม่นับออเดอร์ที่ถูกยกเลิก หรือไม่มารับ)
     let count = 0;
     let total = 0;
     let storeCount = {};   // { 'ชื่อร้าน': จำนวนครั้งที่สั่ง }
 
     for (let i = 0; i < myOrders.length; i++) {
         let order = myOrders[i];
-        if (order.status === 'cancelled') continue;
+        if (order.status === 'cancelled' || order.status === 'noshow') continue;
 
         count = count + 1;
         total = total + order.total;
@@ -107,6 +107,9 @@ function showHistory() {
     document.getElementById('stat-count').textContent = count;
     document.getElementById('stat-total').textContent = total.toLocaleString('th-TH');
     document.getElementById('stat-store').textContent = favorite;
+
+    // ไม่มารับอาหารกี่ครั้ง (กติกาอยู่ใน noshow.js)
+    showNoShow();
 
     // 4) วาดรายการประวัติ
     let list = document.getElementById('history-list');
@@ -134,10 +137,33 @@ function showHistory() {
         html += '  </div>';
         html += '  <p class="history-store"><b>' + esc(order.store) + '</b> · ชั้น ' + esc(order.floor) + ' · คิว ' + esc(order.queue) + '</p>';
         html += '  <p class="history-foods">' + foods.join(', ') + '</p>';
-        html += '  <p class="history-total">' + PAY_METHOD_TEXT[payInfo(order).method] + ' · <b>' + order.total + ' บาท</b></p>';
+        html += '  <p class="history-total"><b>' + order.total + ' บาท</b></p>';
         html += '</article>';
     }
     list.innerHTML = html;
+}
+
+
+/* ---------- ไม่มารับอาหาร (ใช้ฟังก์ชันจาก noshow.js) ---------- */
+function showNoShow() {
+    let box = document.getElementById('noshow-info');
+    let count = noShowCount(user.student);
+    let until = bannedUntil(user.student);
+
+    if (until > 0) {
+        // โดนพักอยู่
+        box.className = 'noshow-note banned';
+        box.textContent = '⛔ ถูกพักการสั่งถึง ' + dateText(until) + ' เพราะไม่มารับอาหาร ' + count + ' ครั้ง';
+        box.hidden = false;
+    } else if (count > 0) {
+        // เคยไม่มารับ แต่ยังไม่ครบ
+        box.className = 'noshow-note';
+        box.textContent = '⚠ ไม่มารับอาหาร ' + count + ' ครั้งใน ' + NO_SHOW_DAYS + ' วันที่ผ่านมา ' +
+            '(ครบ ' + MAX_NO_SHOW + ' ครั้งจะถูกพักการสั่ง ' + BAN_DAYS + ' วัน)';
+        box.hidden = false;
+    } else {
+        box.hidden = true;
+    }
 }
 
 

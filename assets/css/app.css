@@ -547,7 +547,7 @@ button, input, select, textarea { font-family: inherit; }
 .cancel-reason { color: var(--red) !important; }
 
 .ticket.q-ready { border-color: #6fc28b; box-shadow: 0 0 0 2px #d9f2e1; }
-.ticket.q-cancelled, .ticket.q-done { opacity: 0.75; }
+.ticket.q-cancelled, .ticket.q-done, .ticket.q-noshow { opacity: 0.75; }
 
 .notify-ask {
     margin: 0 0 16px !important;
@@ -693,122 +693,18 @@ form[hidden], .reset-done[hidden] { display: none; }
 }
 .content .btn-link-submit:hover { background: var(--pink-deep); }
 
-/* ---------- เลือกวิธีชำระ (ตะกร้า) ---------- */
-.pay-section { margin-top: 24px; }
-.pay-section h3 { margin: 0 0 10px; font-size: 17px; }
-.pay-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.pay-option {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    background: white;
-    border: 1px solid var(--line-strong);
-    border-radius: 10px;
-    cursor: pointer;
-}
-.pay-option:hover { border-color: var(--pink); }
-.pay-option input { position: absolute; opacity: 0; pointer-events: none; }
-.pay-option:has(input:checked) { border-color: var(--pink-dark); box-shadow: inset 0 0 0 1px var(--pink-dark); background: var(--pink-pale); }
-.pay-option:has(input:focus-visible) { outline: 2px solid var(--pink); outline-offset: 2px; }
-.pay-option.is-off { opacity: 0.5; cursor: not-allowed; }
-.pay-option::after {
-    content: "";
-    width: 18px;
-    height: 18px;
-    margin-left: auto;
-    flex: none;
-    border: 2px solid var(--line-strong);
-    border-radius: 50%;
-}
-.pay-option:has(input:checked)::after { border: 5px solid var(--pink-dark); }
-.pay-text b { display: block; font-size: 15px; }
-.pay-text small { color: var(--muted); font-size: 13px; }
-.pay-icon {
-    display: grid;
-    place-items: center;
-    width: 38px;
-    height: 38px;
-    flex: none;
-    border-radius: 8px;
-    font-family: var(--font-head);
-    font-weight: 700;
-}
-.pay-icon-cash { color: var(--green); background: #e3f7ea; font-size: 19px; }
-.pay-icon-qr { grid-template-columns: 1fr 1fr; gap: 3px; padding: 8px; background: var(--pink-soft); }
-.pay-icon-qr i { width: 100%; height: 100%; border: 2.5px solid var(--pink-deep); border-radius: 2px; }
-.pay-icon-qr i:nth-child(4) { border-width: 0; background: var(--pink-deep); transform: scale(0.55); }
-.pay-note {
-    margin: 10px 0 0 !important;
-    padding: 9px 12px;
-    color: #8a5a00 !important;
-    background: #fff8e6;
-    border-radius: 8px;
-    font-size: 14px;
-}
+/* ---------- ชำระเงินบนใบคิว (จ่ายเงินสดที่ร้านอย่างเดียว) ---------- */
+.ticket-pay { margin: 0 18px 14px; padding: 10px 12px; color: #7a5200; background: #fff8e6; border-radius: 8px; font-size: 14px; font-weight: 600; }
+.ticket-pay.paid { color: var(--green); background: #f4fbf6; }
 
-/* ---------- ชำระเงินบนใบคิว ---------- */
-.ticket-pay { margin: 0 18px 14px; padding: 10px 12px; background: #fcf9fa; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; }
-.ticket-pay p { margin: 6px 0 0 !important; color: var(--muted); }
-.pay-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 600; }
-.pay-badge { padding: 2px 8px; border-radius: 6px; font-size: 12px; color: #8a5a00; background: #fff4d6; white-space: nowrap; }
-.pay-pending .pay-badge { color: #1d4ed8; background: #e8f0ff; }
-.pay-paid .pay-badge { color: var(--green); background: #e3f7ea; }
-.ticket-pay.pay-paid { background: #f4fbf6; border-color: #cfe9d8; }
-.pay-warn { color: var(--red) !important; }
-.content .btn-pay { width: 100%; margin-top: 10px; padding: 9px 14px; font-size: 15px; }
-.ticket-pay .link-btn { margin-top: 6px; }
+/* ---------- ตะกร้า: บอกวิธีจ่าย + เหตุผลที่สั่งไม่ได้ ---------- */
+.pay-hint { margin: 10px 0 0 !important; font-size: 14px; }
+.block-note { margin: 16px 0 0 !important; padding: 10px 14px; color: var(--red) !important; background: #fde8e8; border-radius: 8px; font-weight: 600; }
 
-/* ---------- กล่อง QR ---------- */
-.dialog .pay-box { max-width: 400px; max-height: calc(100vh - 40px); overflow-y: auto; text-align: center; }
-.pay-box .pay-store { margin: 0 0 2px; color: var(--muted); font-size: 13px; }
-.pay-box h3 { margin-bottom: 2px; }
-.pay-box .pay-amount { margin: 0 0 14px; color: var(--text); font-size: 15px; }
-.pay-box #pay-amount { color: var(--pink-deep); font-family: var(--font-head); font-size: 32px; font-weight: 700; }
-.qr-frame {
-    width: 230px;
-    margin: 0 auto 12px;
-    padding: 12px;
-    background: white;
-    border: 1px solid var(--line-strong);
-    border-radius: 12px;
-}
-.qr-frame img { display: block; width: 100%; height: auto; }
-.pay-account { display: flex; justify-content: center; gap: 22px; margin: 0 0 8px; font-size: 14px; }
-.pay-account dt { color: var(--muted); font-size: 12px; }
-.pay-account dd { margin: 0; font-weight: 600; }
-.pay-box .link-btn { color: var(--pink-deep); font-size: 13px; }
-.pay-steps {
-    margin: 14px 0 14px;
-    padding: 12px 12px 12px 32px;
-    color: var(--muted);
-    background: #fcf9fa;
-    border-radius: 8px;
-    font-size: 13px;
-    text-align: left;
-}
-.pay-steps li + li { margin-top: 2px; }
-.pay-steps b { color: var(--text); }
-.slip-pick { display: block; cursor: pointer; }
-.slip-pick input { position: absolute; width: 1px; height: 1px; opacity: 0; }
-.slip-pick span {
-    display: block;
-    padding: 12px;
-    color: var(--pink-deep);
-    border: 1.5px dashed var(--line-strong);
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 14px;
-}
-.slip-pick:hover span { border-color: var(--pink-dark); background: var(--pink-pale); }
-.slip-pick:has(input:focus-visible) span { outline: 2px solid var(--pink); outline-offset: 2px; }
-.slip-preview { display: block; max-width: 100%; max-height: 220px; margin: 10px auto 0; border-radius: 8px; border: 1px solid var(--line); }
-.slip-preview[hidden] { display: none; }
-.pay-box .field-error { margin: 8px 0 0; text-align: left; }
-.pay-box .dialog-actions { margin-top: 16px; }
-.pay-box .btn-submit { color: white; background: var(--pink-dark); border: 1px solid var(--pink-dark); }
-.pay-box .btn-submit:hover { background: var(--pink-deep); }
+/* ---------- ไม่มารับอาหาร ---------- */
+.s-noshow { color: #6b4f00; background: #f3e9cf; }
+.noshow-note { margin: 14px 0 0 !important; padding: 10px 14px; color: #7a5200 !important; background: #fff4d6; border-radius: 8px; }
+.noshow-note.banned { color: var(--red) !important; background: #fde8e8; font-weight: 600; }
 
 /* ---------- มือถือ ---------- */
 @media screen and (max-width: 860px) {
@@ -834,7 +730,6 @@ form[hidden], .reset-done[hidden] { display: none; }
     #floor-list, #store-list, #menu-list, #cart-list, #order-list { grid-template-columns: 1fr; }
     .summary { flex-direction: column; align-items: stretch; }
     #order-button { width: 100%; min-width: 0; }
-    .pay-options { grid-template-columns: 1fr; }
     .dialog { padding: 12px; }
 }
 

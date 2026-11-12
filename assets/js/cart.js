@@ -63,66 +63,13 @@ if (user === null) {
     if (cart.length === 0) html = 'ตะกร้าว่าง';
     document.getElementById('cart-list').innerHTML = html;
     document.getElementById('total').textContent = total;
-    document.getElementById('order-button').disabled = cart.length === 0 || problem;
-    if (cart.length > 0) setupPayment();
-}
-
-// ร้านในตะกร้า (ไม่ซ้ำ) พร้อมวิธีชำระที่แต่ละร้านรองรับ
-function cartStores() {
-    let configs = getStoreConfigs();
-    let seen = {};
-    let list = [];
-    for (let item of cart) {
-        let s = lookupItem(item).store;
-        if (!s || seen[s.id]) continue;
-        seen[s.id] = true;
-        list.push({ store: s, opts: storePayOptions(configs[s.id]) });
+    // สั่งไม่ได้ถ้า: โดนพักเพราะไม่มารับ / ค้างรับเยอะเกิน (noshow.js)
+    let blocked = orderBlockReason(user.student);
+    if (blocked !== '') {
+        document.getElementById('block-note').textContent = blocked;
+        document.getElementById('block-note').hidden = false;
     }
-    return list;
-}
-
-function chosenPay() {
-    let r = document.querySelector('input[name="pay"]:checked');
-    return r ? r.value : 'cash';
-}
-
-// วิธีชำระที่ใช้จริงของแต่ละร้าน: ถ้าร้านไม่รองรับวิธีที่เลือก ใช้วิธีที่ร้านมี
-function methodForStore(opts, chosen) {
-    if (opts[chosen]) return chosen;
-    return opts.cash ? 'cash' : 'qr';
-}
-
-function setupPayment() {
-    let stores = cartStores();
-    let anyQr = stores.some(function (s) { return s.opts.qr; });
-    let anyCash = stores.some(function (s) { return s.opts.cash; });
-    let radios = document.querySelectorAll('input[name="pay"]');
-    radios.forEach(function (r) {
-        let ok = r.value === 'qr' ? anyQr : anyCash;
-        r.disabled = !ok;
-        r.closest('.pay-option').classList.toggle('is-off', !ok);
-        r.onchange = updatePayNote;
-    });
-    if (!anyCash && anyQr) document.querySelector('input[value="qr"]').checked = true;
-    if (!anyQr) document.getElementById('qr-hint').textContent = 'ร้านในตะกร้ายังไม่เปิดรับ QR';
-    document.getElementById('pay-section').hidden = false;
-    updatePayNote();
-}
-
-function updatePayNote() {
-    let chosen = chosenPay();
-    let stores = cartStores();
-    let other = stores.filter(function (s) { return methodForStore(s.opts, chosen) !== chosen; });
-    let note = document.getElementById('pay-note');
-    if (other.length) {
-        note.hidden = false;
-        note.textContent = other.map(function (s) { return s.store.name; }).join(', ') +
-            (chosen === 'qr' ? ' ยังไม่รับ QR จะชำระเป็นเงินสดที่ร้าน' : ' รับเฉพาะ QR จะชำระด้วย QR');
-    } else {
-        note.hidden = true;
-    }
-    document.getElementById('pay-summary').textContent =
-        chosen === 'qr' ? 'ชำระผ่าน QR หลังยืนยันสั่ง' : 'ชำระเงินสดที่ร้านตอนรับอาหาร';
+    document.getElementById('order-button').disabled = cart.length === 0 || problem || blocked !== '';
 }
 
 function changeQuantity(index, amount) {
@@ -138,6 +85,9 @@ function placeOrder() {
     let button = document.getElementById('order-button');
     if (button.disabled) return;       // กันกดซ้ำ
     button.disabled = true;
+    // ตรวจอีกครั้งตอนกดสั่ง เผื่อสถานะเปลี่ยนระหว่างเปิดหน้าไว้ (noshow.js)
+    let blocked = orderBlockReason(user.student);
+    if (blocked !== '') { alert(blocked); location.reload(); return; }
     let configs = getStoreConfigs();
     let groups = {};
     for (let item of cart) {
@@ -157,14 +107,10 @@ function placeOrder() {
     }
     let orders = loadOrders();
     let queues = [];
-    let chosen = chosenPay();
-    let anyQr = false;
     for (let sid in groups) {
         let g = groups[sid];
         let total = 0;
         for (let it of g.items) total += it.price * it.quantity;
-        let method = methodForStore(storePayOptions(configs[sid]), chosen);
-        if (method === 'qr') anyQr = true;
         let order = {
             id: makeId(),
             queue: nextQueue(g.store.id),
@@ -175,8 +121,7 @@ function placeOrder() {
             name: user.name,
             items: g.items,
             total: total,
-            status: 'new',
-            payment: { method: method, status: 'unpaid' },
+            status: 'new',   // จ่ายเงินสดตอนรับอาหาร จึงไม่ต้องเก็บข้อมูลการชำระ
             createdAt: Date.now(),
             updatedAt: Date.now()
         };
@@ -187,5 +132,5 @@ function placeOrder() {
     localStorage.removeItem('food_cart');
     // แจ้งผลในหน้าคิวแทนกล่องข้อความ
     sessionStorage.setItem('food_placed', queues.join(', '));
-    cloudGo(anyQr ? 'queue.html?pay=1' : 'queue.html');   // รอบันทึกขึ้น Firebase ก่อนเปลี่ยนหน้า
+    cloudGo('queue.html');   // รอบันทึกขึ้น Firebase ก่อนเปลี่ยนหน้า
 }

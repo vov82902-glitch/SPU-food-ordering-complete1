@@ -126,6 +126,7 @@
     <aside class="sidebar">
       <div class="side-brand"><span class="brand-mark small">SPU</span><div><b>Merchant</b><small>จัดการร้านค้า</small></div></div>
       <div class="store-chip"><span class="online-dot"></span><div><b id="side-store-name">ร้านค้า</b><small id="side-store-code">รหัสร้าน</small></div></div>
+      <button type="button" id="menu-toggle" class="menu-toggle" aria-label="เปิด/ปิดเมนู" aria-expanded="false">☰</button>
       <nav>
         <button class="nav-item active" data-view="overview"><span>▦</span> ภาพรวม</button>
         <button class="nav-item" data-view="orders"><span>▤</span> ออเดอร์ <i id="nav-order-count">0</i></button>
@@ -162,7 +163,7 @@
         <div id="order-board" class="board"></div>
 
         <!-- ตารางออเดอร์ทั้งหมด (ไว้ค้นหาย้อนหลัง) -->
-        <div class="toolbar history-toolbar"><div><h2>ออเดอร์ทั้งหมด</h2><p class="muted">ค้นหาและดูออเดอร์ย้อนหลัง</p></div><div class="filters"><input id="order-search" placeholder="ค้นหาเลขออเดอร์ / ชื่อลูกค้า"><select id="status-filter"><option value="all">ทุกสถานะ</option><option value="new">ออเดอร์ใหม่</option><option value="cooking">กำลังทำ</option><option value="ready">พร้อมรับ</option><option value="done">สำเร็จ</option><option value="cancelled">ยกเลิก</option></select></div></div>
+        <div class="toolbar history-toolbar"><div><h2>ออเดอร์ทั้งหมด</h2><p class="muted">ค้นหาและดูออเดอร์ย้อนหลัง</p></div><div class="filters"><input id="order-search" placeholder="ค้นหาเลขออเดอร์ / ชื่อลูกค้า"><select id="status-filter"><option value="all">ทุกสถานะ</option><option value="new">ออเดอร์ใหม่</option><option value="cooking">กำลังทำ</option><option value="ready">พร้อมรับ</option><option value="done">สำเร็จ</option><option value="cancelled">ยกเลิก</option><option value="noshow">ไม่มารับ</option></select></div></div>
         <div id="orders-container" class="panel table-panel"></div>
       </section>
 
@@ -211,49 +212,16 @@
               <button type="button" id="store-image-clear" class="text-btn">ลบรูป</button>
             </div>
           </div>
-          <fieldset class="pay-settings">
-            <legend>การรับชำระเงิน</legend>
-            <div class="pay-toggles">
-              <label class="check"><input type="checkbox" id="setting-cash"> รับเงินสดที่ร้าน</label>
-              <label class="check"><input type="checkbox" id="setting-qr"> รับโอนผ่าน QR พร้อมเพย์</label>
-            </div>
-            <div class="image-field qr-field">
-              <img id="qr-image-preview" class="image-preview qr-preview" alt="QR code ของร้าน">
-              <div class="image-controls">
-                <b>รูป QR code รับเงิน</b>
-                <label class="btn ghost file-btn">เลือกรูป QR จากเครื่อง<input id="qr-image-file" type="file" accept="image/*" hidden></label>
-                <input id="qr-image-url" type="url" placeholder="หรือวางลิงก์รูป https://...">
-                <button type="button" id="qr-image-clear" class="text-btn">ลบ QR</button>
-                <small class="muted">บันทึกรูป QR จากแอปธนาคาร (เมนู "รับเงิน") แล้วอัปโหลดที่นี่ เปลี่ยนใหม่ได้ทุกเมื่อ</small>
-              </div>
-            </div>
-            <div class="form-grid">
-              <label>ชื่อบัญชีที่แสดงให้ลูกค้า<input id="setting-pay-name" placeholder="เช่น นายสมชาย ใจดี"></label>
-              <label>เลขพร้อมเพย์ / เลขบัญชี<input id="setting-pay-number" placeholder="เช่น 081-234-5678"></label>
-            </div>
-          </fieldset>
           <button class="btn primary" type="submit">บันทึกการตั้งค่า</button>
           <p class="muted small-note">รหัสร้านค้าใช้แยกข้อมูลออเดอร์ของแต่ละร้าน ไม่สามารถเปลี่ยนจากหน้านี้ได้</p>
         </form>
-        <div class="panel notice"><b>การแจ้งเตือน</b><p>หน้านี้จะแจ้งเตือนเมื่อมีออเดอร์ใหม่ในระบบเดียวกัน หากต้องการแจ้งเตือนข้ามอุปกรณ์/ข้ามเบราว์เซอร์ ต้องเชื่อมฐานข้อมูลกลางและระบบแจ้งเตือน เช่น Firebase</p></div>
+        <div class="panel notice"><b>การรับเงิน</b><p>ร้านรับเงินสดตอนลูกค้ามารับอาหารเท่านั้น กด "ลูกค้ารับแล้ว" เมื่อได้รับเงินแล้ว · ถ้าอาหารพร้อมแล้วลูกค้าไม่มารับเกิน 15 นาที กด "ไม่มารับ" ได้</p></div>
       </section>
-      <footer>© SPU Food Ordering · Merchant Center <span id="connection-label">โหมดทดลองในเครื่อง</span></footer>
+      <footer>© SPU Food Ordering · Merchant Center <span id="connection-label">ข้อมูลซิงก์ผ่าน Firebase</span></footer>
     </main>
-  </div>
-  <div id="slip-dialog" class="slip-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="slip-title">
-    <div class="slip-box">
-      <h3 id="slip-title">สลิปการโอน</h3>
-      <p id="slip-info" class="muted"></p>
-      <img id="slip-image" alt="สลิปการโอนของลูกค้า">
-      <div class="form-actions">
-        <button type="button" class="btn ghost" id="slip-close">ปิด</button>
-        <button type="button" class="btn ghost" id="slip-reject">สลิปไม่ถูกต้อง</button>
-        <button type="button" class="btn primary" id="slip-confirm">ยืนยันได้รับเงิน</button>
-      </div>
-    </div>
   </div>
   <div id="toast" class="toast" role="status"></div>
   <audio id="notify-audio" preload="auto"><source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=" type="audio/wav"></audio>
-<script src="assets/js/cloud.js" data-load="assets/js/main.js assets/js/order-timer.js assets/js/admin-options.js assets/js/admin-board.js assets/js/admin.js"></script>
+<script src="assets/js/cloud.js" data-load="assets/js/main.js assets/js/noshow.js assets/js/order-timer.js assets/js/admin-options.js assets/js/admin-board.js assets/js/admin.js"></script>
 </body>
 </html>

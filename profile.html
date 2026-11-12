@@ -50,12 +50,15 @@
             <div><small>ร้านที่สั่งบ่อยสุด</small><b id="stat-store">-</b></div>
         </section>
 
+        <!-- เตือนเรื่องไม่มารับอาหาร (profile.js -> showNoShow) -->
+        <p id="noshow-info" class="noshow-note" hidden></p>
+
         <!-- ประวัติการสั่ง -->
         <h3 class="profile-title">ประวัติการสั่งอาหาร</h3>
         <div id="history-list"></div>
     </main>
 
-    <footer class="site-footer"><b>SPU Food Ordering</b> · รับชำระเงินสดและ QR พร้อมเพย์</footer>
-    <script src="assets/js/cloud.js" data-load="assets/js/main.js assets/js/profile.js"></script>
+    <footer class="site-footer"><b>SPU Food Ordering</b> · จ่ายเงินสดที่ร้าน</footer>
+    <script src="assets/js/cloud.js" data-load="assets/js/main.js assets/js/noshow.js assets/js/profile.js"></script>
 </body>
 </html>

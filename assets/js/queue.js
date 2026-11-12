@@ -5,7 +5,6 @@ try { cart = JSON.parse(localStorage.getItem('food_cart')) || []; } catch (e) { 
 
 let knownStatus = {};   // จำสถานะล่าสุดไว้ เพื่อแจ้งเตือนเมื่อร้านเปลี่ยนสถานะ
 let firstRender = true;
-let paySlip = '';       // รูปสลิปที่ลูกค้าเลือกในกล่อง QR
 
 // ขั้นตอนของออเดอร์ (ใช้วาดแถบติดตามสถานะ)
 const TRACK = [
@@ -33,14 +32,6 @@ if (user === null) {
         sessionStorage.removeItem('food_placed');
         showToast('สั่งอาหารสำเร็จ · คิวของคุณ <b>' + esc(placed) + '</b>', 'ok');
     }
-    // มาจากหน้าตะกร้าแบบเลือกจ่าย QR -> เปิดกล่อง QR ของออเดอร์ล่าสุดที่ยังไม่จ่าย
-    if (new URLSearchParams(location.search).get('pay') === '1') {
-        history.replaceState(null, '', 'queue.html');
-        let waiting = loadOrders().filter(function (o) {
-            return o.student === user.student && o.status !== 'cancelled' && payInfo(o).method === 'qr' && payInfo(o).status === 'unpaid';
-        }).sort(function (a, b) { return b.createdAt - a.createdAt; });
-        if (waiting.length) openPay(waiting[0].id);
-    }
     window.addEventListener('storage', function (e) {
         if (!e.key || e.key === 'food_orders') renderQueue();
     });
@@ -55,7 +46,7 @@ function askNotify() {
 }
 
 function trackHtml(status) {
-    if (status === 'cancelled') return '';
+    if (status === 'cancelled' || status === 'noshow') return '';
     let now = TRACK.findIndex(function (t) { return t[0] === status; });
     let h = '<ol class="track">';
     TRACK.forEach(function (t, i) {
@@ -71,14 +62,9 @@ function renderQueue() {
     let html = '';
     for (let order of mine) {
         // แจ้งเตือนเมื่อสถานะเปลี่ยน หรือร้านกดเรียกคิวซ้ำ
-        let pay = payInfo(order);
-        let sig = order.status + '|' + (order.recalledAt || '') + '|' + pay.status;
+        let sig = order.status + '|' + (order.recalledAt || '');
         let oldSig = knownStatus[order.id];
-        if (!firstRender && oldSig && oldSig.split('|')[2] !== pay.status) {
-            if (pay.status === 'paid') showToast('ร้านยืนยันการชำระเงินคิว <b>' + esc(order.queue) + '</b> แล้ว', 'ok');
-            else if (pay.status === 'unpaid' && pay.note) { showToast('คิว <b>' + esc(order.queue) + '</b>: ' + esc(pay.note), 'bad'); beep(1); }
-        }
-        if (!firstRender && oldSig && oldSig.split('|').slice(0, 2).join('|') !== sig.split('|').slice(0, 2).join('|')) {
+        if (!firstRender && oldSig && oldSig !== sig) {
             if (order.status === 'ready') {
                 showToast('คิว <b>' + esc(order.queue) + '</b> อาหารพร้อมแล้ว ไปรับที่ ' + esc(order.store) + ' ชั้น ' + esc(order.floor), 'ok');
                 beep(4);
@@ -87,6 +73,9 @@ function renderQueue() {
                 showToast('ร้านรับออเดอร์คิว <b>' + esc(order.queue) + '</b> แล้ว กำลังทำอาหาร');
             } else if (order.status === 'cancelled' && order.cancelledBy !== 'customer') {
                 showToast('คิว <b>' + esc(order.queue) + '</b> ถูกร้านยกเลิก', 'bad');
+                beep(1);
+            } else if (order.status === 'noshow') {
+                showToast('คิว <b>' + esc(order.queue) + '</b> ถูกปิดเพราะไม่มารับอาหาร', 'bad');
                 beep(1);
             }
         }
@@ -117,7 +106,12 @@ function renderQueue() {
         }
         html += '</ul>';
         html += '<div class="ticket-total"><span>รวม</span><b>' + order.total + ' บาท</b></div>';
-        html += payHtml(order, pay);
+        // การชำระเงิน: จ่ายเงินสดที่ร้านอย่างเดียว
+        if (order.status === 'done') {
+            html += '<div class="ticket-pay paid">✅ จ่ายเงินแล้ว ' + order.total + ' บาท</div>';
+        } else if (order.status !== 'cancelled' && order.status !== 'noshow') {
+            html += '<div class="ticket-pay">💵 เตรียมเงินสด ' + order.total + ' บาท จ่ายที่ร้านตอนรับอาหาร</div>';
+        }
 
         // ยกเลิกได้เฉพาะตอนที่ร้านยังไม่รับออเดอร์
         html += '<footer class="ticket-foot">';
@@ -130,6 +124,8 @@ function renderQueue() {
         } else if (order.status === 'cancelled') {
             html += '<small class="cancel-reason">' + (order.cancelledBy === 'customer' ? 'คุณยกเลิกออเดอร์นี้' : 'ร้านยกเลิก') +
                 (order.cancelReason && order.cancelledBy !== 'customer' ? ': ' + esc(order.cancelReason) : '') + '</small>';
+        } else if (order.status === 'noshow') {
+            html += '<small class="cancel-reason">ร้านปิดออเดอร์เพราะไม่มารับภายใน ' + PICKUP_WAIT_MINUTES + ' นาที · ไม่มารับครบ ' + MAX_NO_SHOW + ' ครั้งจะถูกพักการสั่ง ' + BAN_DAYS + ' วัน</small>';   // ตัวเลขมาจาก noshow.js
         } else {
             html += '<small>ขอบคุณที่ใช้บริการ</small>';
         }
@@ -143,109 +139,6 @@ function renderQueue() {
     }
 }
 
-/* ---------- การชำระเงินบนบัตรคิว ---------- */
-function payHtml(order, pay) {
-    let cfg = getStoreConfigs()[order.storeId];
-    let opts = cfg ? storePayOptions(cfg) : { cash: true, qr: false };
-    let h = '<div class="ticket-pay pay-' + pay.status + '">';
-    h += '<div class="pay-line"><span>ชำระเงิน · ' + PAY_METHOD_TEXT[pay.method] + '</span>';
-    h += '<span class="pay-badge">' + PAY_STATUS_TEXT[pay.status] + '</span></div>';
-
-    if (order.status === 'cancelled') {
-        if (pay.status !== 'unpaid' && pay.method === 'qr') h += '<p>ออเดอร์ถูกยกเลิก กรุณาติดต่อร้านเพื่อรับเงินคืน' + (cfg && cfg.phone ? ' โทร ' + esc(cfg.phone) : '') + '</p>';
-    } else if (pay.status === 'paid') {
-        h += '<p>ร้านได้รับเงินแล้ว' + (pay.paidAt ? ' เมื่อ ' + timeText(pay.paidAt) : '') + '</p>';
-    } else if (pay.status === 'pending') {
-        h += '<p>ส่งสลิปแล้ว รอร้านตรวจสอบยอดเงิน</p>';
-    } else if (pay.method === 'qr') {
-        if (pay.note) h += '<p class="pay-warn">ร้านแจ้ง: ' + esc(pay.note) + '</p>';
-        if (opts.qr) {
-            h += '<button class="btn-pay" onclick="openPay(\'' + order.id + '\')">สแกน QR จ่าย ' + order.total + ' บาท</button>';
-        } else {
-            h += '<p>ร้านปิดรับ QR ชั่วคราว ชำระเงินสดที่ร้านได้</p>';
-        }
-    } else {
-        h += '<p>เตรียมเงินสด ' + order.total + ' บาท จ่ายที่ร้านตอนรับอาหาร</p>';
-        if (opts.qr) h += '<button class="link-btn" onclick="openPay(\'' + order.id + '\')">เปลี่ยนเป็นสแกน QR</button>';
-    }
-    return h + '</div>';
-}
-
-/* ---------- กล่องสแกน QR ---------- */
-
-function openPay(id) {
-    let order = loadOrders().find(function (o) { return o.id === id; });
-    if (!order) return;
-    let cfg = getStoreConfigs()[order.storeId];
-    if (!cfg || !storePayOptions(cfg).qr) { showToast('ร้านนี้ยังไม่เปิดรับ QR', 'bad'); return; }
-    let box = document.getElementById('pay-dialog');
-    if (!box) {
-        document.body.insertAdjacentHTML('beforeend',
-            '<div id="pay-dialog" class="dialog" hidden><div class="dialog-box pay-box" role="dialog" aria-modal="true" aria-labelledby="pay-title">' +
-            '<p class="pay-store" id="pay-store"></p>' +
-            '<h3 id="pay-title">สแกนเพื่อชำระเงิน</h3>' +
-            '<p class="pay-amount"><span id="pay-amount"></span> บาท</p>' +
-            '<div class="qr-frame"><img id="pay-qr" alt="QR code สำหรับชำระเงิน"></div>' +
-            '<dl class="pay-account"><div><dt>ชื่อบัญชี</dt><dd id="pay-name"></dd></div><div><dt>พร้อมเพย์</dt><dd id="pay-number"></dd></div></dl>' +
-            '<a id="pay-save" class="link-btn" download="qr-payment.jpg">บันทึกรูป QR</a>' +
-            '<ol class="pay-steps"><li>เปิดแอปธนาคาร สแกน QR หรือเลือกรูปจากเครื่อง</li><li>โอนยอด <b id="pay-amount2"></b> บาท ให้ตรง</li><li>แนบสลิปด้านล่าง แล้วกดแจ้งชำระเงิน</li></ol>' +
-            '<label class="slip-pick"><input type="file" id="pay-slip-file" accept="image/*"><span id="pay-slip-label">แนบสลิปการโอน</span></label>' +
-            '<img id="pay-slip-preview" class="slip-preview" alt="สลิป" hidden>' +
-            '<p id="pay-error" class="field-error" role="alert"></p>' +
-            '<div class="dialog-actions"><button type="button" class="btn-plain" id="pay-later">ไว้ทีหลัง</button>' +
-            '<button type="button" class="btn-submit" id="pay-send">แจ้งชำระเงิน</button></div></div></div>');
-        box = document.getElementById('pay-dialog');
-        document.getElementById('pay-later').onclick = closePay;
-        box.onclick = function (e) { if (e.target === box) closePay(); };
-        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePay(); });
-        document.getElementById('pay-slip-file').addEventListener('change', function () {
-            resizeImageFile(this.files[0], 720, function (data) {
-                paySlip = data;
-                let pv = document.getElementById('pay-slip-preview');
-                pv.src = data;
-                pv.hidden = false;
-                document.getElementById('pay-slip-label').textContent = 'เปลี่ยนรูปสลิป';
-                document.getElementById('pay-error').textContent = '';
-            }, function (msg) { document.getElementById('pay-error').textContent = msg; });
-        });
-    }
-    paySlip = '';
-    document.getElementById('pay-slip-file').value = '';
-    document.getElementById('pay-slip-preview').hidden = true;
-    document.getElementById('pay-slip-label').textContent = 'แนบสลิปการโอน';
-    document.getElementById('pay-error').textContent = '';
-    document.getElementById('pay-store').textContent = order.store + ' · คิว ' + order.queue;
-    document.getElementById('pay-amount').textContent = order.total;
-    document.getElementById('pay-amount2').textContent = order.total;
-    document.getElementById('pay-qr').src = cfg.qrImage;
-    document.getElementById('pay-save').href = cfg.qrImage;
-    document.getElementById('pay-name').textContent = cfg.payName || order.store;
-    document.getElementById('pay-number').textContent = cfg.payNumber || '-';
-    document.getElementById('pay-send').onclick = function () { sendPay(id); };
-    box.hidden = false;
-}
-
-function closePay() {
-    let box = document.getElementById('pay-dialog');
-    if (box) box.hidden = true;
-}
-
-function sendPay(id) {
-    if (!paySlip) { document.getElementById('pay-error').textContent = 'กรุณาแนบรูปสลิปการโอนก่อน'; return; }
-    let orders = loadOrders();
-    let order = orders.find(function (o) { return o.id === id; });
-    if (!order || order.student !== user.student) return;
-    if (order.status === 'cancelled') { closePay(); showToast('ออเดอร์นี้ถูกยกเลิกแล้ว', 'bad'); renderQueue(); return; }
-    order.payment = { method: 'qr', status: 'pending', slip: paySlip, sentAt: Date.now() };
-    order.updatedAt = Date.now();
-    try { saveOrders(orders); } catch (e) {
-        document.getElementById('pay-error').textContent = 'พื้นที่เก็บข้อมูลเต็ม ลองใช้รูปสลิปที่เล็กลง';
-        return;
-    }
-    closePay();
-    showToast('ส่งสลิปคิว <b>' + esc(order.queue) + '</b> แล้ว รอร้านตรวจสอบ', 'ok');
-    renderQueue();
-}
 
 /* ---------- กล่องยืนยันการยกเลิก ---------- */
 function askCancel(id) {

@@ -344,30 +344,13 @@ const STATUS_TEXT = {
     cooking: 'กำลังทำอาหาร',
     ready: 'อาหารพร้อมแล้ว มารับได้เลย',
     done: 'รับอาหารแล้ว',
-    cancelled: 'ยกเลิกแล้ว'
+    cancelled: 'ยกเลิกแล้ว',
+    noshow: 'ไม่มารับอาหาร'   // ร้านปิดออเดอร์เพราะลูกค้าไม่มารับ (ดู noshow.js)
 };
 
-/* ---------- การชำระเงิน ---------- */
-const PAY_METHOD_TEXT = { cash: 'เงินสด', qr: 'QR พร้อมเพย์' };
-const PAY_STATUS_TEXT = {
-    unpaid: 'ยังไม่ชำระ',
-    pending: 'รอร้านตรวจสอบ',
-    paid: 'ชำระแล้ว'
-};
-
-// ออเดอร์เก่าที่ยังไม่มีข้อมูลการชำระ ถือเป็นเงินสด
-function payInfo(order) {
-    if (order.payment) return order.payment;
-    return { method: 'cash', status: order.status === 'done' ? 'paid' : 'unpaid' };
-}
-
-// ร้านรับชำระแบบไหนได้บ้าง (QR ใช้ได้เมื่อร้านอัปโหลดรูป QR แล้ว)
-function storePayOptions(cfg) {
-    return {
-        cash: cfg.acceptCash !== false,
-        qr: !!cfg.qrImage && cfg.acceptQr !== false
-    };
-}
+/* ---------- การชำระเงิน ----------
+   จ่ายเงินสดที่ร้านตอนรับอาหารอย่างเดียว (ตัดระบบ QR ออกเพื่อเลี่ยงปัญหาคืนเงิน/สลิปปลอม)
+   ออเดอร์สถานะ done = ลูกค้ารับอาหารและจ่ายเงินแล้ว */
 
 // อ่านไฟล์รูปแล้วย่อขนาด คืนค่าเป็น data URL (JPEG)
 function resizeImageFile(file, max, done, fail) {
