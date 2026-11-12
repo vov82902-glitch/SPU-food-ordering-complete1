@@ -126,6 +126,11 @@ function cardHtml(order) {
     // รายการอาหาร
     html += itemsListHtml(order.items);
 
+    // รายการที่ถูกตัดออกเพราะของหมด (out-of-stock.js)
+    if (order.removed && order.removed.length > 0) {
+        html += '<p class="card-removed">❌ ตัดออก: ' + esc(order.removed.join(', ')) + '</p>';
+    }
+
     // เงินที่ต้องเก็บ (จ่ายเงินสดที่ร้านอย่างเดียว)
     html += '<div class="card-money">💵 เก็บเงินสด <b>' + order.total + ' ฿</b></div>';
 
@@ -155,9 +160,20 @@ function itemsListHtml(items) {
         if (item.options && item.options.length > 0) {
             html += '<ul class="card-options">';
             for (let j = 0; j < item.options.length; j++) {
-                html += '<li>' + esc(item.options[j].name) + '</li>';
+                // ตัวที่หมดและรอลูกค้าเลือกใหม่ -> ขีดฆ่า
+                let isOut = item.pendingChoice && item.pendingChoice.name === item.options[j].name &&
+                    item.pendingChoice.group === item.options[j].group;
+                html += '<li' + (isOut ? ' class="is-out"' : '') + '>' + esc(item.options[j].name) + '</li>';
             }
             html += '</ul>';
+        }
+
+        // ของหมด (out-of-stock.js): รอลูกค้าเลือกใหม่ / ลูกค้าเปลี่ยนแล้ว
+        if (item.pendingChoice) {
+            html += '<span class="card-wait">⏳ ' + esc(item.pendingChoice.name) + 'หมด · รอลูกค้าเลือกใหม่</span>';
+        }
+        if (item.changeNote) {
+            html += '<span class="card-changed">🔄 ' + esc(item.changeNote) + '</span>';
         }
 
         // หมายเหตุจากลูกค้า
@@ -175,34 +191,48 @@ function itemsListHtml(items) {
 
 
 /* ----------------------------------------------------------
-   5. ปุ่มของการ์ด: ปุ่มหลักใหญ่ 1 ปุ่ม + ปุ่มรองเป็นลิงก์เล็ก (กันกดพลาด)
+   5. ปุ่มของการ์ด
+   - ปุ่มหลัก 1 ปุ่ม เต็มความกว้าง สีชมพู (ขั้นต่อไปของออเดอร์)
+   - ปุ่มรอง 2 ปุ่ม วางคู่กันด้านล่าง ขอบสี + ไอคอน บอกความหมาย:
+       เหลือง = ของหมด / เรียกซ้ำ   แดง = ยกเลิก / ไม่มารับ
 ---------------------------------------------------------- */
 function cardButtons(order) {
     let main = '';
-    let links = '';
+    let side = '';
 
     if (order.status === 'new') {
         main = mainButton('accept', 'รับออเดอร์', order);
-        links = linkButton('cancel', 'ยกเลิกออเดอร์', order);
+        side = sideButton('stock', '🥕', 'ของหมด', 'warn', order) +
+               sideButton('cancel', '✕', 'ยกเลิก', 'danger', order);
     }
     if (order.status === 'cooking') {
-        main = mainButton('ready', 'ทำเสร็จ · เรียกลูกค้า', order);
-        links = linkButton('cancel', 'ยกเลิกออเดอร์', order);
+        // ยังรอลูกค้าเลือกของแทน -> ปุ่มบอกให้รอก่อน (out-of-stock.js)
+        if (hasPendingChoice(order)) {
+            main = '<button type="button" class="btn primary card-main" disabled>⏳ รอลูกค้าเลือกของแทน</button>';
+        } else {
+            main = mainButton('ready', 'ทำเสร็จ · เรียกลูกค้า', order);
+        }
+        side = sideButton('stock', '🥕', 'ของหมด', 'warn', order) +
+               sideButton('cancel', '✕', 'ยกเลิก', 'danger', order);
     }
     if (order.status === 'ready') {
         main = mainButton('done', 'ลูกค้ารับแล้ว · รับเงิน ' + order.total + ' ฿', order);
-        links = linkButton('recall', '📢 เรียกซ้ำ', order) + linkButton('noshow', 'ลูกค้าไม่มารับ', order);
+        side = sideButton('recall', '📢', 'เรียกซ้ำ', 'warn', order) +
+               sideButton('noshow', '🚫', 'ไม่มารับ', 'danger', order);
     }
 
-    return '<div class="card-actions">' + main + '<div class="card-links">' + links + '</div></div>';
+    return '<div class="card-actions">' + main + '<div class="card-side">' + side + '</div></div>';
 }
 
+// ปุ่มหลัก: ใหญ่ เต็มความกว้าง
 function mainButton(act, label, order) {
     return '<button type="button" class="btn primary card-main" data-act="' + act + '" data-id="' + order.id + '">' + label + '</button>';
 }
 
-function linkButton(act, label, order) {
-    return '<button type="button" class="text-btn" data-act="' + act + '" data-id="' + order.id + '">' + label + '</button>';
+// ปุ่มรอง: ไอคอน + ข้อความ / color = 'warn' (เหลือง) หรือ 'danger' (แดง)
+function sideButton(act, icon, label, color, order) {
+    return '<button type="button" class="side-btn side-' + color + '" data-act="' + act + '" data-id="' + order.id + '">' +
+        '<span class="side-icon" aria-hidden="true">' + icon + '</span>' + label + '</button>';
 }
 
 

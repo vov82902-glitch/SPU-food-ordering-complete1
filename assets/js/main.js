@@ -1,3 +1,27 @@
+/* ==========================================================
+   main.js — ฟังก์ชันที่ทุกหน้าใช้ร่วมกัน (โหลดเป็นไฟล์แรกเสมอ ต่อจาก cloud.js)
+
+   ข้อมูลหลักของระบบ (ซิงก์ขึ้น Firebase ผ่าน cloud.js):
+   food_data     : ชั้น > ร้าน > เมนู
+   food_stores   : ตั้งค่าร้าน (รหัสร้าน, PIN, เปิด/ปิด, เลขคิว)
+   food_orders   : ออเดอร์ทั้งหมด
+   food_students : บัญชีนักศึกษา
+   ข้อมูลของเครื่องนี้เท่านั้น: food_user (ใครล็อกอินอยู่), food_cart (ตะกร้า)
+
+   สารบัญ (ค้นด้วย Ctrl+F เช่น "4. ")
+   1. ข้อมูลเมนูเริ่มต้น
+   2. โหลด / บันทึกเมนู
+   3. ตัวเลือกเมนู (หมู/ไก่, ไข่ดาว)
+   4. ตั้งค่าร้าน + เลขคิว
+   5. ออเดอร์ + สถานะ + การจ่ายเงิน
+   6. เครื่องมือแสดงผล (esc, เวลา)
+   7. แจ้งเตือน + เสียง
+   8. บัญชีนักศึกษา + รหัสผ่าน
+   9. ผู้ใช้ที่ล็อกอินอยู่
+   10. ตะกร้า
+========================================================== */
+
+/* ---------- 1. ข้อมูลเมนูเริ่มต้น (ใช้ตอนร้านยังไม่เคยแก้เมนู) ---------- */
 let foodData = [
     {
         id: 1,
@@ -179,7 +203,7 @@ let foodData = [
 
 
 /* ==========================================================
-   ส่วนที่ใช้ร่วมกันระหว่าง "หน้าลูกค้า" และ "หน้าร้านค้า (merchant)"
+   2. โหลด / บันทึกเมนู
    ข้อมูลเก็บใน localStorage และซิงก์ขึ้น Firebase Firestore ผ่าน cloud.js
 
    food_data    : เมนูที่ร้านแก้ไขแล้ว (ถ้าไม่มีจะใช้ foodData ด้านบน)
@@ -220,7 +244,7 @@ function addDefaultOptions(store, menu) {
     });
 }
 
-/* ---------- ตัวเลือกเมนู (เช่น หมู/ไก่, ไข่ดาว) ใช้ร่วมกันหลายหน้า ---------- */
+/* ---------- 3. ตัวเลือกเมนู (เช่น หมู/ไก่, ไข่ดาว) ใช้ร่วมกันหลายหน้า ---------- */
 
 // ชื่อตัวเลือกที่ลูกค้าเลือก เช่น "หมูสับ, ไข่ดาว, เผ็ดน้อย" (ไม่มีตัวเลือก = "")
 function optionNames(item) {
@@ -240,17 +264,31 @@ function itemTitle(item) {
 }
 
 // คิดราคาใหม่จากเมนูปัจจุบัน = ราคาเมนู + ราคาตัวเลือกที่เลือก
-// ถ้าร้านลบตัวเลือกนั้นไปแล้ว -> คืนค่า null (ให้หน้าตะกร้าแจ้งลูกค้า)
+// ถ้าร้านลบตัวเลือกนั้น หรือตั้งเป็น "หมด" แล้ว -> คืนค่า null (ให้หน้าตะกร้าแจ้งลูกค้า)
 function priceWithOptions(menu, chosen) {
     let total = menu.price;
     if (!chosen) return total;
 
     for (let i = 0; i < chosen.length; i++) {
         let choice = findChoice(menu, chosen[i].group, chosen[i].name);
-        if (choice === null) return null;
+        if (choice === null || choice.available === false) return null;
         total = total + choice.price;
     }
     return total;
+}
+
+// เมนูนี้สั่งไม่ได้เพราะกลุ่มที่ต้องเลือก หมดทุกตัวเลือก (เช่น เนื้อสัตว์หมดทุกอย่าง)
+function requiredOptionsSoldOut(menu) {
+    let groups = menu.options || [];
+    for (let g = 0; g < groups.length; g++) {
+        if (!groups[g].required) continue;
+        let left = 0;
+        for (let c = 0; c < groups[g].choices.length; c++) {
+            if (groups[g].choices[c].available !== false) left = left + 1;
+        }
+        if (left === 0) return true;
+    }
+    return false;
 }
 
 // หาตัวเลือกในเมนูจาก "ชื่อกลุ่ม" + "ชื่อตัวเลือก" (ไม่เจอ = null)
@@ -292,7 +330,7 @@ function findStoreByName(name) {
     return allStores().find(function (s) { return s.name === name; }) || null;
 }
 
-/* ---------- ตั้งค่าร้าน + รหัสของแต่ละร้าน ---------- */
+/* ---------- 4. ตั้งค่าร้าน + เลขคิว ---------- */
 const QUEUE_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 function getStoreConfigs() {
@@ -338,7 +376,7 @@ function nextQueue(storeId) {
     return cfg.prefix + String(cfg.queueNumber).padStart(3, '0');
 }
 
-/* ---------- ออเดอร์ ---------- */
+/* ---------- 5. ออเดอร์ + สถานะ + การจ่ายเงิน ---------- */
 const STATUS_TEXT = {
     new: 'รอร้านรับออเดอร์',
     cooking: 'กำลังทำอาหาร',
@@ -422,7 +460,7 @@ function saveOrders(orders) {
     if (window.cloudSave) cloudSave('food_orders', orders);   // ส่งขึ้น Firebase (cloud.js)
 }
 
-/* ---------- เครื่องมือแสดงผล ---------- */
+/* ---------- 6. เครื่องมือแสดงผล ---------- */
 function esc(value) {
     if (value == null) return '';
     return String(value)
@@ -449,22 +487,56 @@ function updateAgoLabels() {
     });
 }
 
-/* ---------- แจ้งเตือน: ข้อความเด้ง + เสียง + แจ้งเตือนของเบราว์เซอร์ ---------- */
+/* ---------- 7. แจ้งเตือน: ข้อความเด้ง + เสียง + แจ้งเตือนของเบราว์เซอร์ ---------- */
+/* ---------- เสียงแจ้งเตือน ----------
+   กฎของเบราว์เซอร์: เว็บเล่นเสียงเองไม่ได้ จนกว่าผู้ใช้จะคลิก/แตะในหน้านั้นก่อน 1 ครั้ง
+   (เปลี่ยนหน้าแล้วต้องแตะใหม่) จึงมีแถบ "แตะเพื่อเปิดเสียง" ให้กดก่อน -> askSound() */
 let audioCtx = null;
 
 function unlockAudio() {
     try {
         audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume().then(hideSoundBar);   // ปลดล็อกสำเร็จ -> ซ่อนแถบเตือน
+        } else {
+            hideSoundBar();
+        }
     } catch (e) { audioCtx = null; }
 }
-document.addEventListener('click', unlockAudio);
+document.addEventListener('pointerdown', unlockAudio);   // คลิกเมาส์ หรือแตะจอมือถือ
 document.addEventListener('keydown', unlockAudio);
+
+// หน้าที่ต้องใช้เสียง (หน้าคิว / หน้าร้าน) เรียกฟังก์ชันนี้:
+// ถ้าเบราว์เซอร์ยังบล็อกเสียงอยู่ -> โชว์แถบให้แตะเปิดเสียง
+function askSound() {
+    try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) { return; }   // เบราว์เซอร์ไม่รองรับเสียง
+    if (audioCtx.state === 'running') return;            // เปิดเสียงได้แล้ว
+    if (document.getElementById('sound-bar')) return;    // มีแถบอยู่แล้ว
+
+    let bar = document.createElement('button');
+    bar.id = 'sound-bar';
+    bar.type = 'button';
+    bar.className = 'sound-bar';
+    bar.textContent = '🔇 แตะตรงนี้เพื่อเปิดเสียงแจ้งเตือน';
+    bar.onclick = function () {
+        unlockAudio();
+        beep(1);   // เล่นให้ได้ยิน 1 ครั้ง จะได้รู้ว่าเสียงใช้ได้
+    };
+    document.body.appendChild(bar);
+}
+
+function hideSoundBar() {
+    let bar = document.getElementById('sound-bar');
+    if (bar) bar.remove();
+}
 
 function beep(times) {
     try {
         unlockAudio();
         if (!audioCtx) return;
+        if (audioCtx.state !== 'running') { askSound(); return; }   // ยังโดนบล็อก -> เตือนให้แตะ
         times = times || 2;
         for (let i = 0; i < times; i++) {
             let osc = audioCtx.createOscillator();
@@ -508,7 +580,7 @@ function desktopNotify(title, body) {
     } catch (e) { /* ไม่รองรับ */ }
 }
 
-/* ---------- บัญชีนักศึกษา ----------
+/* ---------- 8. บัญชีนักศึกษา + รหัสผ่าน ----------
    food_students : { รหัสนักศึกษา: { name, phone, pass, createdAt } }
    รหัสผ่านเก็บเป็นค่า hash (ระบบทดลองในเครื่อง ไม่ใช่ความปลอดภัยระดับใช้งานจริง) */
 function hashText(text) {
@@ -587,7 +659,7 @@ function sameName(a, b) {
 }
 
 /* ==========================================================
-   ผู้ใช้ที่เข้าสู่ระบบอยู่ (เก็บใน localStorage คีย์ 'food_user')
+   9. ผู้ใช้ที่เข้าสู่ระบบอยู่ (เก็บใน localStorage คีย์ 'food_user')
    รูปแบบข้อมูล: { name: 'ชื่อ-นามสกุล', student: 'รหัสนักศึกษา 8 หลัก' }
 ========================================================== */
 
@@ -618,4 +690,34 @@ function logout() {
     localStorage.removeItem('food_user');
     localStorage.removeItem('food_cart');
     location.href = 'index.html';
+}
+
+
+/* ==========================================================
+   10. ตะกร้า (เก็บใน localStorage คีย์ 'food_cart' เป็นของเครื่องนี้เท่านั้น)
+   รูปแบบข้อมูล: [ { menuId, storeId, name, price, options, note, quantity, ... }, ... ]
+========================================================== */
+
+// อ่านตะกร้า (ไม่มี หรือข้อมูลเสีย = ตะกร้าว่าง [])
+function loadCart() {
+    try {
+        return JSON.parse(localStorage.getItem('food_cart')) || [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveCart(cart) {
+    localStorage.setItem('food_cart', JSON.stringify(cart));
+}
+
+// นับจำนวนจานทั้งหมดในตะกร้า แล้วแสดงที่ตัวเลขมุมขวาบน (id="cart-count")
+function updateCartBadge() {
+    let cart = loadCart();
+    let count = 0;
+    for (let i = 0; i < cart.length; i++) {
+        count = count + cart[i].quantity;
+    }
+    let badge = document.getElementById('cart-count');
+    if (badge) badge.textContent = count;
 }

@@ -1,12 +1,26 @@
-let user = null;
-let cart = [];
-try { user = JSON.parse(localStorage.getItem('food_user')); } catch (e) { user = null; }
-try { cart = JSON.parse(localStorage.getItem('food_cart')) || []; } catch (e) { cart = []; }
+/* ==========================================================
+   queue.js — หน้าคิวของฉัน (queue.html)
+   แสดงบัตรคิวทุกออเดอร์ของลูกค้า + แจ้งเตือนเมื่อร้านเปลี่ยนสถานะ
+   ต้องโหลดหลัง main.js, noshow.js, out-of-stock.js และ queue-choice.js
 
-let knownStatus = {};   // จำสถานะล่าสุดไว้ เพื่อแจ้งเตือนเมื่อร้านเปลี่ยนสถานะ
-let firstRender = true;
+   ข้อมูลเปลี่ยน (ร้านกดปุ่ม) -> cloud.js อัปเดต -> หน้านี้วาดใหม่เอง
+   และวาดซ้ำทุก 3 วินาทีกันพลาด
 
-// ขั้นตอนของออเดอร์ (ใช้วาดแถบติดตามสถานะ)
+   สารบัญ
+   1. เริ่มต้นหน้า
+   2. วาดบัตรคิวทั้งหมด
+   3. แจ้งเตือนเมื่อสถานะเปลี่ยน
+   4. บัตรคิว 1 ใบ
+   5. ลูกค้ายกเลิกออเดอร์
+========================================================== */
+
+let user = getCurrentUser();   // { name, student } หรือ null ถ้ายังไม่ล็อกอิน
+
+let knownStatus = {};    // สถานะล่าสุดของแต่ละออเดอร์ (ไว้เทียบว่าเปลี่ยนไหม)
+let knownWaiting = {};   // แต่ละออเดอร์มีรายการรอเลือกของแทนกี่อย่าง (ของหมด)
+let firstRender = true;  // วาดครั้งแรกไม่ต้องเตือน
+
+// ขั้นตอนของออเดอร์ (แถบติดตามสถานะ)
 const TRACK = [
     ['new', 'สั่งแล้ว'],
     ['cooking', 'กำลังทำ'],
@@ -14,28 +28,39 @@ const TRACK = [
     ['done', 'รับแล้ว']
 ];
 
+
+/* ----------------------------------------------------------
+   1. เริ่มต้นหน้า
+---------------------------------------------------------- */
 if (user === null) {
-    location.replace('index.html');
+    location.replace('index.html');   // ยังไม่ล็อกอิน -> กลับหน้าเข้าสู่ระบบ
 } else {
-    let count = 0;
-    for (let i = 0; i < cart.length; i++) {
-        count = count + cart[i].quantity;
-    }
-    document.getElementById('cart-count').textContent = count;
-    if ('Notification' in window && Notification.permission === 'default') {
-        document.getElementById('order-list').insertAdjacentHTML('beforebegin',
-            '<p id="notify-ask" class="notify-ask">ต้องการให้แจ้งเตือนเมื่ออาหารพร้อมไหม? <button class="link-btn" onclick="askNotify()">เปิดการแจ้งเตือน</button></p>');
-    }
+    updateCartBadge();
+    askNotifyPermission();
     renderQueue();
+    askSound();   // เบราว์เซอร์ยังบล็อกเสียง -> โชว์แถบให้แตะเปิดเสียง (main.js)
+
+    // มาจากหน้าตะกร้า -> เด้งข้อความ "สั่งสำเร็จ"
     let placed = sessionStorage.getItem('food_placed');
     if (placed) {
         sessionStorage.removeItem('food_placed');
         showToast('สั่งอาหารสำเร็จ · คิวของคุณ <b>' + esc(placed) + '</b>', 'ok');
     }
+
+    // ข้อมูลเปลี่ยน -> วาดใหม่
     window.addEventListener('storage', function (e) {
-        if (!e.key || e.key === 'food_orders') renderQueue();
+        if (e.key === 'food_data') loadFoodData();   // ร้านตั้งของหมด -> ใช้เมนูล่าสุด
+        if (!e.key || e.key === 'food_orders' || e.key === 'food_data') renderQueue();
     });
     setInterval(renderQueue, 3000);
+}
+
+// ขออนุญาตแจ้งเตือนมุมจอ (ถามครั้งเดียว)
+function askNotifyPermission() {
+    if (!('Notification' in window) || Notification.permission !== 'default') return;
+    document.getElementById('order-list').insertAdjacentHTML('beforebegin',
+        '<p id="notify-ask" class="notify-ask">ต้องการให้แจ้งเตือนเมื่ออาหารพร้อมไหม? ' +
+        '<button class="link-btn" onclick="askNotify()">เปิดการแจ้งเตือน</button></p>');
 }
 
 function askNotify() {
@@ -45,93 +70,31 @@ function askNotify() {
     });
 }
 
-function trackHtml(status) {
-    if (status === 'cancelled' || status === 'noshow') return '';
-    let now = TRACK.findIndex(function (t) { return t[0] === status; });
-    let h = '<ol class="track">';
-    TRACK.forEach(function (t, i) {
-        h += '<li class="' + (i < now ? 'done' : i === now ? 'now' : '') + '">' + t[1] + '</li>';
-    });
-    return h + '</ol>';
-}
 
+/* ----------------------------------------------------------
+   2. วาดบัตรคิวทั้งหมด
+---------------------------------------------------------- */
 function renderQueue() {
+    // ของหมดแล้วไม่ได้เลือกใหม่ภายใน 3 นาที -> ระบบตัดสินใจให้ (out-of-stock.js)
+    expirePendingChoices(function (order) { return order.student === user.student; });
+
     let orders = loadOrders();
-    let mine = orders.filter(function (o) { return o.student === user.student; });
+
+    // เอาเฉพาะออเดอร์ของเรา เรียงใหม่ไปเก่า
+    let mine = [];
+    for (let i = 0; i < orders.length; i++) {
+        if (orders[i].student === user.student) mine.push(orders[i]);
+    }
     mine.sort(function (a, b) { return b.createdAt - a.createdAt; });
+
     let html = '';
-    for (let order of mine) {
-        // แจ้งเตือนเมื่อสถานะเปลี่ยน หรือร้านกดเรียกคิวซ้ำ
-        let sig = order.status + '|' + (order.recalledAt || '');
-        let oldSig = knownStatus[order.id];
-        if (!firstRender && oldSig && oldSig !== sig) {
-            if (order.status === 'ready') {
-                showToast('คิว <b>' + esc(order.queue) + '</b> อาหารพร้อมแล้ว ไปรับที่ ' + esc(order.store) + ' ชั้น ' + esc(order.floor), 'ok');
-                beep(4);
-                desktopNotify('อาหารพร้อมแล้ว คิว ' + order.queue, order.store + ' ชั้น ' + order.floor);
-            } else if (order.status === 'cooking') {
-                showToast('ร้านรับออเดอร์คิว <b>' + esc(order.queue) + '</b> แล้ว กำลังทำอาหาร');
-            } else if (order.status === 'cancelled' && order.cancelledBy !== 'customer') {
-                showToast('คิว <b>' + esc(order.queue) + '</b> ถูกร้านยกเลิก', 'bad');
-                beep(1);
-            } else if (order.status === 'noshow') {
-                showToast('คิว <b>' + esc(order.queue) + '</b> ถูกปิดเพราะไม่มารับอาหาร', 'bad');
-                beep(1);
-            }
-        }
-        knownStatus[order.id] = sig;
-
-        let ahead = 0;
-        if (order.status === 'new' || order.status === 'cooking') {
-            ahead = orders.filter(function (o) {
-                return o.storeId === order.storeId && (o.status === 'new' || o.status === 'cooking') && o.createdAt < order.createdAt;
-            }).length;
-        }
-
-        html += '<article class="ticket q-' + order.status + '">';
-        html += '<header class="ticket-head"><div><small>เลขคิว</small><strong>' + esc(order.queue) + '</strong></div>';
-        html += '<span class="status s-' + order.status + '">' + STATUS_TEXT[order.status] + '</span></header>';
-        html += trackHtml(order.status);
-        html += '<p class="ticket-info">' + esc(order.store) + ' · ชั้น ' + esc(order.floor) + ' · สั่งเมื่อ ' + timeText(order.createdAt);
-        if (order.status === 'new' || order.status === 'cooking') {
-            html += '<br>' + (ahead === 0 ? 'คุณเป็นคิวถัดไป' : 'มีคิวก่อนหน้า ' + ahead + ' คิว');
-        }
-        html += '</p>';
-
-        html += '<ul class="ticket-items">';
-        for (let item of order.items) {
-            html += '<li><span>' + itemTitle(item) + ' <em>× ' + item.quantity + '</em></span><span>' + (item.price * item.quantity) + '</span>';
-            if (item.note) html += '<small class="item-note">หมายเหตุ: ' + esc(item.note) + '</small>';
-            html += '</li>';
-        }
-        html += '</ul>';
-        html += '<div class="ticket-total"><span>รวม</span><b>' + order.total + ' บาท</b></div>';
-        // การชำระเงิน: จ่ายเงินสดที่ร้านอย่างเดียว
-        if (order.status === 'done') {
-            html += '<div class="ticket-pay paid">✅ จ่ายเงินแล้ว ' + order.total + ' บาท</div>';
-        } else if (order.status !== 'cancelled' && order.status !== 'noshow') {
-            html += '<div class="ticket-pay">💵 เตรียมเงินสด ' + order.total + ' บาท จ่ายที่ร้านตอนรับอาหาร</div>';
-        }
-
-        // ยกเลิกได้เฉพาะตอนที่ร้านยังไม่รับออเดอร์
-        html += '<footer class="ticket-foot">';
-        if (order.status === 'new') {
-            html += '<button class="btn-cancel" onclick="askCancel(\'' + order.id + '\')">ยกเลิกออเดอร์</button>';
-            html += '<small>ยกเลิกได้จนกว่าร้านจะรับออเดอร์</small>';
-        } else if (order.status === 'cooking' || order.status === 'ready') {
-            html += '<button class="btn-cancel" disabled>ยกเลิกออเดอร์</button>';
-            html += '<small>ร้านเริ่มทำอาหารแล้ว ไม่สามารถยกเลิกได้</small>';
-        } else if (order.status === 'cancelled') {
-            html += '<small class="cancel-reason">' + (order.cancelledBy === 'customer' ? 'คุณยกเลิกออเดอร์นี้' : 'ร้านยกเลิก') +
-                (order.cancelReason && order.cancelledBy !== 'customer' ? ': ' + esc(order.cancelReason) : '') + '</small>';
-        } else if (order.status === 'noshow') {
-            html += '<small class="cancel-reason">ร้านปิดออเดอร์เพราะไม่มารับภายใน ' + PICKUP_WAIT_MINUTES + ' นาที · ไม่มารับครบ ' + MAX_NO_SHOW + ' ครั้งจะถูกพักการสั่ง ' + BAN_DAYS + ' วัน</small>';   // ตัวเลขมาจาก noshow.js
-        } else {
-            html += '<small>ขอบคุณที่ใช้บริการ</small>';
-        }
-        html += '</footer></article>';
+    for (let i = 0; i < mine.length; i++) {
+        notifyChanges(mine[i]);
+        html += ticketHtml(mine[i], orders);
     }
     firstRender = false;
+
+    // วาดใหม่เฉพาะตอนที่มีอะไรเปลี่ยน (หน้าจะได้ไม่กระพริบ)
     let list = document.getElementById('order-list');
     if (list.dataset.html !== html) {
         list.dataset.html = html;
@@ -140,10 +103,165 @@ function renderQueue() {
 }
 
 
-/* ---------- กล่องยืนยันการยกเลิก ---------- */
+/* ----------------------------------------------------------
+   3. แจ้งเตือนเมื่อสถานะเปลี่ยน (เทียบกับครั้งก่อน)
+---------------------------------------------------------- */
+function notifyChanges(order) {
+    let queue = '<b>' + esc(order.queue) + '</b>';
+
+    // 3.1 สถานะเปลี่ยน หรือร้านกด "เรียกซ้ำ"
+    let sig = order.status + '|' + (order.recalledAt || '');
+    let oldSig = knownStatus[order.id];
+    knownStatus[order.id] = sig;
+
+    if (!firstRender && oldSig && oldSig !== sig) {
+        if (order.status === 'ready') {
+            showToast('คิว ' + queue + ' อาหารพร้อมแล้ว ไปรับที่ ' + esc(order.store) + ' ชั้น ' + esc(order.floor), 'ok');
+            beep(4);
+            desktopNotify('อาหารพร้อมแล้ว คิว ' + order.queue, order.store + ' ชั้น ' + order.floor);
+        } else if (order.status === 'cooking') {
+            showToast('ร้านรับออเดอร์คิว ' + queue + ' แล้ว กำลังทำอาหาร');
+        } else if (order.status === 'cancelled' && order.cancelledBy !== 'customer') {
+            showToast('คิว ' + queue + ' ถูกร้านยกเลิก', 'bad');
+            beep(1);
+        } else if (order.status === 'noshow') {
+            showToast('คิว ' + queue + ' ถูกปิดเพราะไม่มารับอาหาร', 'bad');
+            beep(1);
+        }
+    }
+
+    // 3.2 ร้านแจ้งของหมด (จำนวนรายการที่รอเลือกเพิ่มขึ้น = เพิ่งแจ้งมา)
+    let waiting = 0;
+    for (let i = 0; i < order.items.length; i++) {
+        if (order.items[i].pendingChoice) waiting = waiting + 1;
+    }
+    if (!firstRender && waiting > (knownWaiting[order.id] || 0)) {
+        showToast('คิว ' + queue + ': ของบางอย่างหมด กรุณาเลือกใหม่', 'bad');
+        beep(3);
+        desktopNotify('ของหมด คิว ' + order.queue, 'กรุณาเลือกของแทนในหน้าคิว');
+    }
+    knownWaiting[order.id] = waiting;
+}
+
+
+/* ----------------------------------------------------------
+   4. บัตรคิว 1 ใบ
+---------------------------------------------------------- */
+function ticketHtml(order, allOrders) {
+    let active = order.status === 'new' || order.status === 'cooking';
+    let html = '<article class="ticket q-' + order.status + '">';
+
+    // หัวบัตร: เลขคิว + สถานะ
+    html += '<header class="ticket-head"><div><small>เลขคิว</small><strong>' + esc(order.queue) + '</strong></div>';
+    html += '<span class="status s-' + order.status + '">' + STATUS_TEXT[order.status] + '</span></header>';
+    html += trackHtml(order.status);
+
+    // ร้าน + เวลา + มีคิวก่อนหน้ากี่คิว
+    html += '<p class="ticket-info">' + esc(order.store) + ' · ชั้น ' + esc(order.floor) + ' · สั่งเมื่อ ' + timeText(order.createdAt);
+    if (active) {
+        let ahead = queueAhead(order, allOrders);
+        html += '<br>' + (ahead === 0 ? 'คุณเป็นคิวถัดไป' : 'มีคิวก่อนหน้า ' + ahead + ' คิว');
+    }
+    html += '</p>';
+
+    // รายการอาหาร
+    html += '<ul class="ticket-items">';
+    for (let i = 0; i < order.items.length; i++) {
+        let item = order.items[i];
+        html += '<li><span>' + itemTitle(item) + ' <em>× ' + item.quantity + '</em></span><span>' + (item.price * item.quantity) + '</span>';
+        if (item.note) html += '<small class="item-note">หมายเหตุ: ' + esc(item.note) + '</small>';
+        if (item.changeNote) html += '<small class="item-changed">🔄 เปลี่ยน ' + esc(item.changeNote) + '</small>';
+        html += '</li>';
+    }
+    html += '</ul>';
+
+    // ของหมด: รายการที่ถูกตัดออก + กล่องให้เลือกของแทน (queue-choice.js)
+    if (order.removed && order.removed.length > 0) {
+        html += '<p class="item-removed">❌ ตัดออก: ' + esc(order.removed.join(', ')) + '</p>';
+    }
+    html += choiceBoxHtml(order);
+
+    // ยอดรวม + การจ่ายเงิน (เงินสดที่ร้านอย่างเดียว)
+    html += '<div class="ticket-total"><span>รวม</span><b>' + order.total + ' บาท</b></div>';
+    if (order.status === 'done') {
+        html += '<div class="ticket-pay paid">✅ จ่ายเงินแล้ว ' + order.total + ' บาท</div>';
+    } else if (order.status !== 'cancelled' && order.status !== 'noshow') {
+        html += '<div class="ticket-pay">💵 เตรียมเงินสด ' + order.total + ' บาท จ่ายที่ร้านตอนรับอาหาร</div>';
+    }
+
+    html += '<footer class="ticket-foot">' + footerHtml(order) + '</footer>';
+    html += '</article>';
+    return html;
+}
+
+// แถบติดตามสถานะ: สั่งแล้ว > กำลังทำ > พร้อมรับ > รับแล้ว
+function trackHtml(status) {
+    if (status === 'cancelled' || status === 'noshow') return '';
+
+    let now = 0;   // ตอนนี้อยู่ขั้นที่เท่าไหร่
+    for (let i = 0; i < TRACK.length; i++) {
+        if (TRACK[i][0] === status) now = i;
+    }
+
+    let html = '<ol class="track">';
+    for (let i = 0; i < TRACK.length; i++) {
+        let cls = '';
+        if (i < now) cls = 'done';
+        if (i === now) cls = 'now';
+        html += '<li class="' + cls + '">' + TRACK[i][1] + '</li>';
+    }
+    return html + '</ol>';
+}
+
+// นับว่ามีคิวของร้านเดียวกันที่สั่งก่อนเรา และยังทำไม่เสร็จกี่คิว
+function queueAhead(order, allOrders) {
+    let count = 0;
+    for (let i = 0; i < allOrders.length; i++) {
+        let other = allOrders[i];
+        let active = other.status === 'new' || other.status === 'cooking';
+        if (other.storeId === order.storeId && active && other.createdAt < order.createdAt) {
+            count = count + 1;
+        }
+    }
+    return count;
+}
+
+// ท้ายบัตร: ปุ่มยกเลิก หรือข้อความตามสถานะ
+function footerHtml(order) {
+    if (order.status === 'new') {
+        return '<button class="btn-cancel" onclick="askCancel(\'' + order.id + '\')">ยกเลิกออเดอร์</button>' +
+            '<small>ยกเลิกได้จนกว่าร้านจะรับออเดอร์</small>';
+    }
+    if (order.status === 'cooking' || order.status === 'ready') {
+        return '<button class="btn-cancel" disabled>ยกเลิกออเดอร์</button>' +
+            '<small>ร้านเริ่มทำอาหารแล้ว ไม่สามารถยกเลิกได้</small>';
+    }
+    if (order.status === 'cancelled') {
+        if (order.cancelledBy === 'customer') return '<small class="cancel-reason">คุณยกเลิกออเดอร์นี้</small>';
+        return '<small class="cancel-reason">ร้านยกเลิก' + (order.cancelReason ? ': ' + esc(order.cancelReason) : '') + '</small>';
+    }
+    if (order.status === 'noshow') {
+        // ตัวเลขมาจาก noshow.js
+        return '<small class="cancel-reason">ร้านปิดออเดอร์เพราะไม่มารับภายใน ' + PICKUP_WAIT_MINUTES + ' นาที · ' +
+            'ไม่มารับครบ ' + MAX_NO_SHOW + ' ครั้งจะถูกพักการสั่ง ' + BAN_DAYS + ' วัน</small>';
+    }
+    return '<small>ขอบคุณที่ใช้บริการ</small>';
+}
+
+
+/* ----------------------------------------------------------
+   5. ลูกค้ายกเลิกออเดอร์ (ได้เฉพาะตอนร้านยังไม่รับ)
+---------------------------------------------------------- */
+
+// เปิดกล่องถามยืนยัน (สร้างครั้งแรกที่กด)
 function askCancel(id) {
-    let order = loadOrders().find(function (o) { return o.id === id; });
+    let order = null;
+    let orders = loadOrders();
+    for (let i = 0; i < orders.length; i++) {
+        if (orders[i].id === id) order = orders[i];
+    }
     if (!order) return;
+
     let box = document.getElementById('cancel-dialog');
     if (!box) {
         document.body.insertAdjacentHTML('beforeend',
@@ -156,6 +274,7 @@ function askCancel(id) {
         box.onclick = function (e) { if (e.target === box) closeCancel(); };
         document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeCancel(); });
     }
+
     document.getElementById('cancel-title').textContent = 'ยกเลิกคิว ' + order.queue + '?';
     document.getElementById('cancel-yes').onclick = function () { closeCancel(); cancelMyOrder(id); };
     box.hidden = false;
@@ -169,20 +288,26 @@ function closeCancel() {
 
 function cancelMyOrder(id) {
     let orders = loadOrders();
-    let order = orders.find(function (o) { return o.id === id; });
+    let order = null;
+    for (let i = 0; i < orders.length; i++) {
+        if (orders[i].id === id) order = orders[i];
+    }
     if (!order || order.student !== user.student) return;
+
     // ตรวจอีกครั้ง เผื่อร้านกดรับออเดอร์ไประหว่างนั้น
     if (order.status !== 'new') {
         showToast('ร้านรับออเดอร์คิว <b>' + esc(order.queue) + '</b> ไปแล้ว ไม่สามารถยกเลิกได้', 'bad');
         renderQueue();
         return;
     }
+
     order.status = 'cancelled';
     order.cancelledBy = 'customer';
     order.cancelReason = 'ลูกค้ายกเลิกเอง';
     order.cancelledAt = Date.now();
     order.updatedAt = Date.now();
     saveOrders(orders);
+
     showToast('ยกเลิกคิว <b>' + esc(order.queue) + '</b> แล้ว');
     renderQueue();
 }

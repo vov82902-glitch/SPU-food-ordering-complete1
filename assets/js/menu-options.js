@@ -78,10 +78,13 @@ function optionsHtml(menu) {
         for (let c = 0; c < group.choices.length; c++) {
             let choice = group.choices[c];
             let priceText = choice.price > 0 ? '+' + choice.price + ' ฿' : '';
+            let soldOut = choice.available === false;   // ร้านตั้งเป็น "หมด" -> กดไม่ได้
+            if (soldOut) priceText = 'หมด';
 
-            html += '<label class="option-choice">';
+            html += '<label class="option-choice' + (soldOut ? ' is-out' : '') + '">';
             html += '<input type="' + type + '" name="group-' + g + '"' +
-                ' data-group="' + g + '" data-choice="' + c + '" data-price="' + choice.price + '">';
+                ' data-group="' + g + '" data-choice="' + c + '" data-price="' + choice.price + '"' +
+                (soldOut ? ' disabled' : '') + '>';
             html += '<span>' + esc(choice.name) + '</span>';
             html += '<b>' + priceText + '</b>';
             html += '</label>';

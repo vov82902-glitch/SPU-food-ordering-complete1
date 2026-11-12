@@ -74,6 +74,8 @@ function drawOptionsEditor() {
             html += '<span>+</span>';
             html += '<input data-field="price" data-g="' + g + '" data-c="' + c + '" type="number" min="0" step="1" value="' + choice.price + '">';
             html += '<span>บาท</span>';
+            html += '<label class="opt-check opt-out"><input type="checkbox" data-field="soldout" data-g="' + g + '" data-c="' + c + '"' +
+                (choice.available === false ? ' checked' : '') + '> หมด</label>';
             html += '<button type="button" class="text-btn" data-action="remove-choice" data-g="' + g + '" data-c="' + c + '" title="ลบตัวเลือกนี้">✕</button>';
             html += '</div>';
         }
@@ -104,6 +106,7 @@ function readOptionsEditor() {
 
         if (field === 'name') group.choices[Number(input.dataset.c)].name = input.value.trim();
         if (field === 'price') group.choices[Number(input.dataset.c)].price = Number(input.value);
+        if (field === 'soldout') group.choices[Number(input.dataset.c)].available = !input.checked;   // ติ๊ก "หมด" = ไม่พร้อมขาย
     }
 }
 
@@ -168,7 +171,7 @@ function optionsForSave() {
             if (choiceNames.indexOf(choice.name) !== -1) return optionsError('ตัวเลือก "' + choice.name + '" ซ้ำกันในกลุ่มเดียวกัน');
 
             choiceNames.push(choice.name);
-            choices.push({ name: choice.name, price: choice.price });
+            choices.push({ name: choice.name, price: choice.price, available: choice.available !== false });
         }
 
         // กลุ่มที่ว่างทั้งหมด (ไม่มีชื่อ ไม่มีตัวเลือก) -> ข้ามไปเลย

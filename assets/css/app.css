@@ -1,23 +1,36 @@
 /* =====================================
-   SPU FOOD ORDERING — หน้าลูกค้า
-   โทนสีชมพูเดิม ดีไซน์เรียบ ใช้งานจริง
+   app.css — หน้าลูกค้า (ทุกหน้ายกเว้น admin.html)
+   โทนชมพูอ่อน ชุดสีเดียวกับ admin.css
+
+   อยากเปลี่ยนสี -> แก้ที่ :root ด้านล่างที่เดียว ทั้งเว็บเปลี่ยนตาม
+   (ส่วนอื่นของไฟล์ใช้ var(--ชื่อสี) ไม่เขียนเลขสีตรงๆ)
 ===================================== */
 
 :root {
-    --pink: #e879a8;
-    --pink-dark: #c94f83;
-    --pink-deep: #a83c6c;
-    --pink-soft: #fff0f6;
-    --pink-pale: #fff8fb;
-    --accent: #f4a6c4;
-    --text: #3d2b34;
-    --muted: #806e77;
-    --line: #eedde5;
-    --line-strong: #e2c6d3;
-    --page: #faf6f8;
+    /* ชมพู (สีหลัก) จากเข้มไปอ่อน */
+    --pink-deep: #a83c6c;    /* หัวข้อ ราคา ตัวเลขสำคัญ */
+    --pink-dark: #c94f83;    /* ปุ่มหลัก */
+    --pink: #e879a8;         /* ไฮไลต์ ขอบตอนกดช่องกรอก */
+    --accent: #f4a6c4;       /* ตกแต่ง */
+    --pink-soft: #fff0f6;    /* พื้นชมพูอ่อน */
+    --pink-pale: #fff8fb;    /* พื้นชมพูจางมาก */
+
+    /* ตัวหนังสือ เส้น พื้นหลัง */
+    --text: #3d2b34;         /* ตัวหนังสือหลัก (ม่วงเข้ม อ่านสบายกว่าดำ) */
+    --muted: #806e77;        /* ตัวหนังสือรอง */
+    --line: #f0e1e8;         /* เส้นคั่นบางๆ */
+    --line-strong: #e6c9d6;  /* เส้นขอบกล่อง ช่องกรอก */
+    --page: #fdf7fa;         /* พื้นหลังทั้งหน้า */
     --white: #ffffff;
-    --green: #1f7a43;
-    --red: #b42318;
+
+    /* สีบอกสถานะ: ตัวหนังสือ / พื้น */
+    --green: #1f7a43;  --green-bg: #e3f7ea;    /* เสร็จ จ่ายแล้ว */
+    --blue: #1d4ed8;   --blue-bg: #e8f0ff;     /* กำลังทำ */
+    --yellow: #7a5200; --yellow-bg: #fff4d6;   /* เตือน รอร้าน */
+    --red: #b42318;    --red-bg: #fde8e8;      /* ยกเลิก ข้อผิดพลาด */
+    --orange: #f0a500;                         /* กรอบเตือนของหมด */
+
+    /* ขนาด + ตัวอักษร */
     --max: 1080px;
     --font: 'Sarabun', Tahoma, sans-serif;
     --font-head: 'Prompt', 'Sarabun', Tahoma, sans-serif;
@@ -499,11 +512,11 @@ button, input, select, textarea { font-family: inherit; }
     font-weight: 600;
     white-space: nowrap;
 }
-.s-new       { color: #8a5a00; background: #fff4d6; }
-.s-cooking   { color: #1d4ed8; background: #e8f0ff; }
-.s-ready     { color: var(--green); background: #e3f7ea; }
+.s-new       { color: var(--yellow); background: var(--yellow-bg); }
+.s-cooking   { color: var(--blue); background: var(--blue-bg); }
+.s-ready     { color: var(--green); background: var(--green-bg); }
 .s-done      { color: #555; background: #efefef; }
-.s-cancelled { color: var(--red); background: #fde8e8; }
+.s-cancelled { color: var(--red); background: var(--red-bg); }
 
 .track { display: flex; margin: 0 18px 12px; padding: 0; list-style: none; font-size: 12px; }
 .track li { flex: 1; padding-top: 8px; color: #b5a2ab; border-top: 3px solid var(--line); text-align: center; }
@@ -617,10 +630,10 @@ button, input, select, textarea { font-family: inherit; }
 #order-list:empty::before { content: "ยังไม่มีคำสั่งซื้อ"; }
 
 .pill { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--pink-deep); background: var(--pink-soft); }
-.pill-open, .pill-ready { background: #e3f7ea; color: var(--green); }
-.pill-closed, .pill-cancelled { background: #fde8e8; color: var(--red); }
-.pill-new { background: #fff4d6; color: #8a5a00; }
-.pill-cooking { background: #e8f0ff; color: #1d4ed8; }
+.pill-open, .pill-ready { background: var(--green-bg); color: var(--green); }
+.pill-closed, .pill-cancelled { background: var(--red-bg); color: var(--red); }
+.pill-new { background: var(--yellow-bg); color: var(--yellow); }
+.pill-cooking { background: var(--blue-bg); color: var(--blue); }
 .pill-done { background: #efefef; color: #555; }
 .closed-note { color: var(--red) !important; font-weight: 600; }
 .is-closed, .is-soldout { opacity: 0.6; }
@@ -676,7 +689,7 @@ form[hidden], .reset-done[hidden] { display: none; }
     height: 56px;
     margin: 0 auto 12px;
     color: var(--green);
-    background: #e3f7ea;
+    background: var(--green-bg);
     border-radius: 50%;
     font-size: 26px;
     font-weight: 700;
@@ -694,17 +707,17 @@ form[hidden], .reset-done[hidden] { display: none; }
 .content .btn-link-submit:hover { background: var(--pink-deep); }
 
 /* ---------- ชำระเงินบนใบคิว (จ่ายเงินสดที่ร้านอย่างเดียว) ---------- */
-.ticket-pay { margin: 0 18px 14px; padding: 10px 12px; color: #7a5200; background: #fff8e6; border-radius: 8px; font-size: 14px; font-weight: 600; }
-.ticket-pay.paid { color: var(--green); background: #f4fbf6; }
+.ticket-pay { margin: 0 18px 14px; padding: 10px 12px; color: var(--yellow); background: var(--yellow-bg); border-radius: 8px; font-size: 14px; font-weight: 600; }
+.ticket-pay.paid { color: var(--green); background: var(--green-bg); }
 
 /* ---------- ตะกร้า: บอกวิธีจ่าย + เหตุผลที่สั่งไม่ได้ ---------- */
 .pay-hint { margin: 10px 0 0 !important; font-size: 14px; }
-.block-note { margin: 16px 0 0 !important; padding: 10px 14px; color: var(--red) !important; background: #fde8e8; border-radius: 8px; font-weight: 600; }
+.block-note { margin: 16px 0 0 !important; padding: 10px 14px; color: var(--red) !important; background: var(--red-bg); border-radius: 8px; font-weight: 600; }
 
 /* ---------- ไม่มารับอาหาร ---------- */
-.s-noshow { color: #6b4f00; background: #f3e9cf; }
-.noshow-note { margin: 14px 0 0 !important; padding: 10px 14px; color: #7a5200 !important; background: #fff4d6; border-radius: 8px; }
-.noshow-note.banned { color: var(--red) !important; background: #fde8e8; font-weight: 600; }
+.s-noshow { color: var(--yellow); background: var(--yellow-bg); }
+.noshow-note { margin: 14px 0 0 !important; padding: 10px 14px; color: var(--yellow) !important; background: var(--yellow-bg); border-radius: 8px; }
+.noshow-note.banned { color: var(--red) !important; background: var(--red-bg); font-weight: 600; }
 
 /* ---------- มือถือ ---------- */
 @media screen and (max-width: 860px) {
@@ -817,3 +830,45 @@ form[hidden], .reset-done[hidden] { display: none; }
 .item-options { color: var(--muted); font-size: 0.9em; }
 #cart-list p.option-line { color: var(--pink-deep); font-weight: 600; }
 #menu-list p.option-hint { color: var(--muted); font-size: 13px; }
+
+/* ---------- ของหมด: ลูกค้าเลือกของแทน (queue-choice.js) ---------- */
+.choice-box { margin: 0 18px 14px; padding: 12px 14px; background: var(--yellow-bg); border: 2px solid var(--orange); border-radius: 10px; }
+.content .choice-box p { margin: 0; }
+.content .choice-title { color: var(--yellow); font-weight: 700; font-size: 15px; }
+.content .choice-sub { margin-bottom: 6px !important; font-size: 13px; }
+.choice-row { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px solid #f3e3c0; cursor: pointer; }
+.choice-row input { width: 18px; height: 18px; accent-color: var(--pink-dark); }
+.choice-row span { flex: 1; color: var(--text); font-weight: 600; }
+.choice-row small { color: var(--muted); font-size: 13px; }
+.content .choice-time { margin-top: 8px !important; font-size: 13px; }
+.choice-actions { display: flex; gap: 8px; margin-top: 10px; }
+.content .btn-choice { flex: 2; }
+.choice-actions .btn-cancel { flex: 1; }
+.item-changed { display: block; width: 100%; color: var(--green); font-size: 13px; font-weight: 600; }
+.content p.item-removed { margin: 0 18px 10px; color: var(--red); font-size: 14px; font-weight: 600; }
+
+/* ตัวเลือกที่หมดในหน้าต่างเลือกเมนู */
+.option-choice.is-out { opacity: 0.5; cursor: not-allowed; }
+.option-choice.is-out b { color: var(--red); }
+
+/* ---------- แถบ "แตะเพื่อเปิดเสียง" (main.js -> askSound) ---------- */
+.sound-bar {
+    position: fixed;
+    left: 50%;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    z-index: 950;
+    transform: translateX(-50%);
+    max-width: calc(100% - 32px);
+    padding: 12px 20px;
+    color: white;
+    background: var(--pink-deep);
+    border: none;
+    border-radius: 99px;
+    box-shadow: 0 8px 24px rgba(60,20,40,0.3);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    animation: sound-pulse 1.6s ease-in-out infinite;
+}
+@keyframes sound-pulse { 50% { box-shadow: 0 8px 24px rgba(60,20,40,0.3), 0 0 0 8px rgba(232,121,168,0.35); } }
+@media (prefers-reduced-motion: reduce) { .sound-bar { animation: none; } }

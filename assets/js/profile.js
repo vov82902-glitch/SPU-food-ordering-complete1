@@ -1,16 +1,21 @@
 /* ==========================================================
    profile.js — หน้าข้อมูลของฉัน (profile.html)
-   แสดง: ข้อมูลส่วนตัว + สรุปยอด + ประวัติการสั่งอาหาร
-   ต้องโหลดหลัง main.js
+   แสดง: ข้อมูลส่วนตัว + สรุปยอด + ประวัติการสั่งอาหาร + เตือนเรื่องไม่มารับ
+   ต้องโหลดหลัง main.js และ noshow.js
+
+   สารบัญ
+   1. ข้อมูลส่วนตัว
+   2. ประวัติการสั่ง + สรุปยอด
+   3. ไม่มารับอาหาร
+   4. แปลงวันที่
 ========================================================== */
 
 let user = getCurrentUser();   // { name, student } ของคนที่ล็อกอินอยู่
 
 if (user === null) {
-    // ยังไม่ล็อกอิน -> กลับไปหน้าเข้าสู่ระบบ
-    location.replace('index.html');
+    location.replace('index.html');   // ยังไม่ล็อกอิน -> กลับหน้าเข้าสู่ระบบ
 } else {
-    showCartCount();
+    updateCartBadge();   // ตัวเลขตะกร้ามุมขวาบน (main.js)
     showProfile();
     showHistory();
 
@@ -21,24 +26,7 @@ if (user === null) {
 }
 
 
-/* ---------- จำนวนของในตะกร้า (มุมขวาบน) ---------- */
-function showCartCount() {
-    let cart = [];
-    try {
-        cart = JSON.parse(localStorage.getItem('food_cart')) || [];
-    } catch (e) {
-        cart = [];
-    }
-
-    let count = 0;
-    for (let i = 0; i < cart.length; i++) {
-        count = count + cart[i].quantity;
-    }
-    document.getElementById('cart-count').textContent = count;
-}
-
-
-/* ---------- ข้อมูลส่วนตัว ---------- */
+/* ---------- 1. ข้อมูลส่วนตัว ---------- */
 function showProfile() {
     // ดึงบัญชีของเราจากรายชื่อนักศึกษาทั้งหมด
     let students = loadStudents();
@@ -62,7 +50,7 @@ function showProfile() {
 }
 
 
-/* ---------- ประวัติการสั่ง + สรุปยอด ---------- */
+/* ---------- 2. ประวัติการสั่ง + สรุปยอด ---------- */
 function showHistory() {
     // 1) เอาเฉพาะออเดอร์ของเรา
     let allOrders = loadOrders();
@@ -144,7 +132,7 @@ function showHistory() {
 }
 
 
-/* ---------- ไม่มารับอาหาร (ใช้ฟังก์ชันจาก noshow.js) ---------- */
+/* ---------- 3. ไม่มารับอาหาร (ใช้ฟังก์ชันจาก noshow.js) ---------- */
 function showNoShow() {
     let box = document.getElementById('noshow-info');
     let count = noShowCount(user.student);
@@ -167,7 +155,7 @@ function showNoShow() {
 }
 
 
-/* ---------- แปลงเวลาเป็นวันที่ภาษาไทย เช่น "11 พ.ย. 2569" ---------- */
+/* ---------- 4. แปลงเวลาเป็นวันที่ภาษาไทย เช่น "11 พ.ย. 2569" ---------- */
 function dateText(ts) {
     return new Date(ts).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
 }

@@ -3,14 +3,7 @@
    ต้องโหลดหลัง main.js
 ========================================================== */
 
-// ดึงข้อมูลจาก localStorage
 let user = getCurrentUser();   // { name, student } หรือ null ถ้ายังไม่ล็อกอิน
-let cart = [];
-try {
-    cart = JSON.parse(localStorage.getItem('food_cart')) || [];
-} catch (e) {
-    cart = [];
-}
 
 if (user === null) {
     // ยังไม่ล็อกอิน -> กลับไปหน้าเข้าสู่ระบบ
@@ -24,11 +17,7 @@ if (user === null) {
 
 /* ---------- ส่วนหัว: ชื่อผู้ใช้ + จำนวนของในตะกร้า ---------- */
 function showHeader() {
-    let count = 0;
-    for (let i = 0; i < cart.length; i++) {
-        count = count + cart[i].quantity;
-    }
-    document.getElementById('cart-count').textContent = count;
+    updateCartBadge();   // ตัวเลขตะกร้ามุมขวาบน (main.js)
 
     // "สวัสดี, ..." ชื่อมาจาก food_user ใน localStorage
     document.getElementById('user-name').textContent = user.name;

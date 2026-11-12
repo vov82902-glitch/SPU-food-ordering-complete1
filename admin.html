@@ -220,8 +220,34 @@
       <footer>© SPU Food Ordering · Merchant Center <span id="connection-label">ข้อมูลซิงก์ผ่าน Firebase</span></footer>
     </main>
   </div>
+  <!-- หน้าต่าง "ของหมด" (ควบคุมด้วย admin-stock.js) -->
+  <div id="stock-dialog" class="stock-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="stock-title">
+    <div class="stock-box">
+      <h3 id="stock-title">อะไรหมด?</h3>
+      <p class="muted">ติ๊กของที่หมด ระบบจะตั้งเป็น "หมด" ในเมนู และให้ลูกค้าที่สั่งไว้เลือกของแทนเอง (มีเวลา 3 นาที)</p>
+      <div id="stock-list"></div>
+      <div class="form-actions">
+        <button type="button" class="btn ghost" id="stock-cancel">ยกเลิก</button>
+        <button type="button" class="btn primary" id="stock-confirm">ยืนยัน ของหมด</button>
+      </div>
+    </div>
+  </div>
+  <!-- หน้าต่างยกเลิกออเดอร์ (ควบคุมด้วย admin-cancel.js) -->
+  <div id="cancel-dialog" class="stock-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
+    <div class="stock-box">
+      <h3 id="cancel-title">ยกเลิกออเดอร์?</h3>
+      <p class="muted">เลือกเหตุผล (ลูกค้าจะเห็นข้อความนี้)</p>
+      <div id="cancel-reasons" class="reason-list"></div>
+      <input id="cancel-other" class="reason-other" maxlength="80" placeholder="พิมพ์เหตุผล" hidden>
+      <p id="cancel-hint" class="reason-hint" hidden>💡 ถ้าหมดแค่บางอย่าง ใช้ปุ่ม "ของหมด" แทน ลูกค้าจะเลือกของแทนเองได้ ไม่ต้องยกเลิกทั้งออเดอร์</p>
+      <div class="form-actions">
+        <button type="button" class="btn ghost" id="cancel-back">ไม่ยกเลิก</button>
+        <button type="button" class="btn primary danger" id="cancel-confirm">ยืนยันยกเลิก</button>
+      </div>
+    </div>
+  </div>
   <div id="toast" class="toast" role="status"></div>
   <audio id="notify-audio" preload="auto"><source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=" type="audio/wav"></audio>
-<script src="assets/js/cloud.js" data-load="assets/js/main.js assets/js/noshow.js assets/js/order-timer.js assets/js/admin-options.js assets/js/admin-board.js assets/js/admin.js"></script>
+<script src="assets/js/cloud.js" data-load="assets/js/main.js assets/js/noshow.js assets/js/out-of-stock.js assets/js/order-timer.js assets/js/admin-options.js assets/js/admin-stock.js assets/js/admin-cancel.js assets/js/admin-board.js assets/js/admin.js"></script>
 </body>
 </html>

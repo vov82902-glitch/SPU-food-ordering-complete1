@@ -1,27 +1,40 @@
 /* =====================================
-   SPU MERCHANT CENTER
-   Pink Theme (คู่กับ app.css)
+   admin.css — หน้าร้านค้า (admin.html)
+   โทนชมพูอ่อน ชุดสีเดียวกับ app.css
+
+   อยากเปลี่ยนสี -> แก้ที่ :root ด้านล่างที่เดียว ทั้งหน้าเปลี่ยนตาม
+   (ส่วนอื่นของไฟล์ใช้ var(--ชื่อสี) ไม่เขียนเลขสีตรงๆ)
 ===================================== */
 
-/* 1. สีหลัก (ชุดเดียวกับ app.css) */
+/* 1. ชุดสี */
 :root {
-    --pink: #e879a8;
-    --pink-dark: #c94f83;
-    --pink-deep: #a83c6c;
-    --pink-soft: #4d3840;
-    --pink-pale: #361c27;
-    --accent: #f4a6c4;
-    --text: #49343e;
-    --muted: #8b7881;
+    /* ชมพู (สีหลัก) จากเข้มไปอ่อน */
+    --pink-deep: #a83c6c;    /* หัวข้อ ตัวเลขสำคัญ */
+    --pink-dark: #c94f83;    /* ปุ่มหลัก */
+    --pink: #e879a8;         /* ไฮไลต์ ขอบตอนกดช่องกรอก */
+    --accent: #f4a6c4;       /* เส้นประ ตกแต่ง */
+    --pink-soft: #fff0f6;    /* พื้นชมพูอ่อน (ปุ่มรอง ป้าย) */
+    --pink-pale: #fff8fb;    /* พื้นชมพูจางมาก (กล่อง การ์ด) */
+
+    /* ตัวหนังสือ เส้น พื้นหลัง */
+    --text: #3d2b34;         /* ตัวหนังสือหลัก (ม่วงเข้ม อ่านสบายกว่าดำ) */
+    --muted: #806e77;        /* ตัวหนังสือรอง */
+    --border: #f0dbe5;       /* เส้นขอบทั่วไป */
+    --line: #f1e2e9;         /* เส้นคั่นบางๆ */
+    --line-strong: #e6c9d6;  /* เส้นขอบช่องกรอก */
+    --page: #fdf7fa;         /* พื้นหลังทั้งหน้า */
     --white: #ffffff;
-    --page: #fff7fa;
-    --border: #d13f81;
+
+    /* สีบอกสถานะ: ตัวหนังสือ / พื้น */
+    --green: #1f7a43;  --green-bg: #e3f7ea;    /* เสร็จ จ่ายแล้ว */
+    --blue: #1d4ed8;   --blue-bg: #e8f0ff;     /* กำลังทำ ข้อมูล */
+    --yellow: #7a5200; --yellow-bg: #fff4d6;   /* เตือน ต้องเก็บเงิน */
+    --red: #b42318;    --red-bg: #fde8e8;      /* ยกเลิก เกินเวลา */
+    --orange: #f0a500;                         /* แถบคอลัมน์ออเดอร์ใหม่ */
+
+    /* เงา + ขนาด */
     --shadow: 0 12px 32px rgba(171,75,119,0.10);
     --shadow-sm: 0 5px 17px rgba(120,60,85,0.05);
-    --green: #1f7a43;
-    --green-bg: #e3f7ea;
-    --red: #b42318;
-    --red-bg: #fde8e8;
     --sidebar-w: 250px;
 }
 
@@ -61,7 +74,7 @@ button, input, select, textarea { font-family: inherit; font-size: 15px; }
     transition: 0.3s;
 }
 .btn.primary {
-    color: rgb(170, 28, 28);
+    color: white;
     background: var(--pink-dark);
 }
 .btn.primary:hover { background: var(--pink-deep); }
@@ -90,7 +103,7 @@ input, select, textarea {
     padding: 11px 13px;
     color: var(--text);
     background: white;
-    border: 1px solid #e9cbd9;
+    border: 1px solid var(--line-strong);
     border-radius: 11px;
     outline: none;
     transition: 0.2s;
@@ -436,7 +449,7 @@ label { display: block; color: var(--text); font-weight: bold; font-size: 14px; 
     font-weight: bold;
 }
 .stat-icon.orange { color: #c2410c; background: #fff1e6; }
-.stat-icon.blue   { color: #1d4ed8; background: #e6f0ff; }
+.stat-icon.blue   { color: var(--blue); background: var(--blue-bg); }
 .stat-icon.purple { color: #9d3c8f; background: #fbe8f8; }
 .stat-icon.green  { color: var(--green); background: var(--green-bg); }
 
@@ -523,9 +536,9 @@ label { display: block; color: var(--text); font-weight: bold; font-size: 14px; 
     font-size: 13px;
     font-weight: bold;
 }
-.badge.new, .pill-new             { background: #fff4d6; color: #8a5a00; }
+.badge.new, .pill-new             { background: var(--yellow-bg); color: var(--yellow); }
 .badge.accepted                   { background: #fbe8f8; color: #9d3c8f; }
-.badge.cooking, .pill-cooking     { background: #e6f0ff; color: #1d4ed8; }
+.badge.cooking, .pill-cooking     { background: var(--blue-bg); color: var(--blue); }
 .badge.ready, .pill-ready         { background: var(--green-bg); color: var(--green); }
 .badge.completed, .badge.done,
 .pill-done                        { background: #eeeeee; color: #555555; }
@@ -567,7 +580,7 @@ label { display: block; color: var(--text); font-weight: bold; font-size: 14px; 
 .panel td .btn { padding: 7px 12px; font-size: 13px; margin: 2px 0; }
 .badge.cancelled, .pill-cancelled { background: var(--red-bg); color: var(--red); }
 
-.badge.noshow { background: #f3e9cf; color: #6b4f00; }
+.badge.noshow { background: var(--yellow-bg); color: var(--yellow); }
 .panel td .text-btn { padding: 2px 0; font-size: 13px; }
 
 footer {
@@ -627,19 +640,19 @@ footer span { margin-left: 6px; color: var(--pink-dark); }
 }
 
 /* ---------- ออเดอร์ที่ร้านยังไม่รับนานเกินไป ---------- */
-tr.late td { background: #fdecec; }
+tr.late td { background: var(--red-bg); }
 
 /* ตัวนับถอยหลัง: ปกติสีส้ม / เลยเวลาแล้วสีแดง */
-.countdown { color: #b26a00; font-weight: 600; white-space: nowrap; }
-.countdown.over { color: #c62828; }
+.countdown { color: var(--yellow); font-weight: 600; white-space: nowrap; }
+.countdown.over { color: var(--red); }
 
 /* ตัวเลือกเมนูในตารางออเดอร์ (เช่น หมูกรอบ, ไข่ดาว) */
-.item-options { color: #a83c6c; }
+.item-options { color: var(--pink-deep); }
 
 /* ---------- แก้ตัวเลือกของเมนู (admin-options.js) ---------- */
-.options-editor { margin: 16px 0; padding: 14px; border: 1px solid #e9cbd9; border-radius: 12px; }
+.options-editor { margin: 16px 0; padding: 14px; border: 1px solid var(--line-strong); border-radius: 12px; }
 .options-editor legend { padding: 0 6px; font-weight: bold; }
-.opt-group { margin-bottom: 12px; padding: 12px; background: #fff5f9; border: 1px solid #f3dbe6; border-radius: 10px; }
+.opt-group { margin-bottom: 12px; padding: 12px; background: var(--pink-pale); border: 1px solid var(--border); border-radius: 10px; }
 .opt-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .opt-row input { flex: 1; }
 .opt-choice-row { padding-left: 18px; }
@@ -659,13 +672,13 @@ tr.late td { background: #fdecec; }
 .board-column {
     min-width: 0;
     padding: 12px;
-    background: #fbf3f7;
+    background: var(--pink-pale);
     border-radius: 14px;
-    border-top: 5px solid #e0c5d2;
+    border-top: 5px solid var(--line-strong);
 }
-.board-column.col-new     { border-top-color: #f0a500; }   /* ใหม่ = ส้ม */
-.board-column.col-cooking { border-top-color: #3b82f6; }   /* กำลังทำ = ฟ้า */
-.board-column.col-ready   { border-top-color: #22a35a; }   /* รอรับ = เขียว */
+.board-column.col-new     { border-top-color: var(--orange); }   /* ใหม่ = ส้ม */
+.board-column.col-cooking { border-top-color: var(--blue); }   /* กำลังทำ = ฟ้า */
+.board-column.col-ready   { border-top-color: var(--green); }   /* รอรับ = เขียว */
 .board-column h3 { display: flex; align-items: center; gap: 8px; margin: 2px 4px 12px; font-size: 17px; }
 .board-count {
     min-width: 26px;
@@ -683,21 +696,21 @@ tr.late td { background: #fdecec; }
     margin-bottom: 12px;
     padding: 14px;
     background: white;
-    border: 1px solid #ecd6e0;
+    border: 1px solid var(--border);
     border-radius: 14px;
     box-shadow: var(--shadow-sm);
 }
-.order-card.late { border: 2px solid #c62828; background: #fff6f6; }
+.order-card.late { border: 2px solid var(--red); background: var(--red-bg); }
 .card-head { display: flex; align-items: center; gap: 8px; }
 .card-queue { color: var(--pink-deep); font-size: 30px; font-weight: 800; letter-spacing: 1px; line-height: 1; }
-.card-dishes { padding: 2px 9px; color: var(--pink-deep); background: #fbe8f1; border-radius: 99px; font-size: 13px; font-weight: 700; }
+.card-dishes { padding: 2px 9px; color: var(--pink-deep); background: var(--pink-soft); border-radius: 99px; font-size: 13px; font-weight: 700; }
 .card-head .countdown { margin-left: auto; }
 .card-customer { margin: 6px 0 4px; color: var(--muted); font-size: 13px; }
-.card-warn { display: inline-block; padding: 1px 7px; color: #7a5200; background: #fff4d6; border-radius: 6px; font-weight: 700; font-size: 12px; }
+.card-warn { display: inline-block; padding: 1px 7px; color: var(--yellow); background: var(--yellow-bg); border-radius: 6px; font-weight: 700; font-size: 12px; }
 
 /* รายการอาหาร: จำนวนในวงกลม + ตัวเลือกบรรทัดละอย่าง */
 .card-items { margin: 0; padding: 0; list-style: none; }
-.card-items > li { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid #f1e2e9; }
+.card-items > li { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
 .card-qty {
     display: grid;
     place-items: center;
@@ -712,14 +725,14 @@ tr.late td { background: #fdecec; }
 }
 .card-items b { display: block; font-size: 17px; line-height: 1.3; }
 .card-options { margin: 4px 0 0; padding: 0; list-style: none; }
-.card-options li { color: #1d4ed8; font-size: 15px; font-weight: 700; }
+.card-options li { color: var(--blue); font-size: 15px; font-weight: 700; }
 .card-options li::before { content: "• "; }
 .card-note {
     display: inline-block;
     margin-top: 6px;
     padding: 4px 10px;
-    color: #7a5200;
-    background: #fff4d6;
+    color: var(--yellow);
+    background: var(--yellow-bg);
     border-radius: 7px;
     font-size: 14px;
     font-weight: 700;
@@ -732,17 +745,39 @@ tr.late td { background: #fdecec; }
     align-items: center;
     margin: 6px 0 10px;
     padding: 8px 12px;
-    color: #7a5200;
-    background: #fff4d6;
+    color: var(--yellow);
+    background: var(--yellow-bg);
     border-radius: 10px;
     font-weight: 700;
 }
 .card-money b { font-size: 18px; }
 
-/* ปุ่ม: ปุ่มหลักเต็มความกว้าง / ปุ่มรองเป็นลิงก์เล็ก */
+/* ปุ่ม: ปุ่มหลักเต็มความกว้าง / ปุ่มรอง 2 ปุ่มวางคู่กัน (admin-board.js -> cardButtons) */
 .card-main { width: 100%; padding: 13px 10px; font-size: 16px; }
-.card-links { display: flex; justify-content: center; gap: 18px; margin-top: 6px; }
-.card-links .text-btn { font-size: 13px; color: var(--muted); text-decoration: underline; }
+.card-side { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.side-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;             /* สูงพอให้นิ้วกดง่ายบนมือถือ */
+    padding: 8px 10px;
+    background: var(--white);
+    border: 1.5px solid;
+    border-radius: 11px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+}
+.side-btn:active { transform: scale(0.97); }
+.side-btn:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
+.side-icon { font-size: 16px; line-height: 1; }
+.side-warn   { color: var(--yellow); border-color: #f0c96b; }      /* ของหมด / เรียกซ้ำ */
+.side-warn:hover   { background: var(--yellow-bg); }
+.side-danger { color: var(--red); border-color: #f0b4ae; }         /* ยกเลิก / ไม่มารับ */
+.side-danger:hover { background: var(--red-bg); }
 
 .history-toolbar { margin-top: 28px; }
 
@@ -755,7 +790,7 @@ tr.late td { background: #fdecec; }
         display: flex;
         margin: 0 -16px 12px;
         background: white;
-        border-bottom: 1px solid #ecd6e0;
+        border-bottom: 1px solid var(--border);
     }
     .board-tab {
         flex: 1;
@@ -777,9 +812,9 @@ tr.late td { background: #fdecec; }
         font-size: 12px;
         font-style: normal;
     }
-    .board-tab.tab-new i     { background: #f0a500; }
-    .board-tab.tab-cooking i { background: #3b82f6; }
-    .board-tab.tab-ready i   { background: #22a35a; }
+    .board-tab.tab-new i     { background: var(--orange); }
+    .board-tab.tab-cooking i { background: var(--blue); }
+    .board-tab.tab-ready i   { background: var(--green); }
     .board-tab.is-active { color: var(--text); border-bottom-color: var(--pink-dark); }
 
     .board-columns { grid-template-columns: 1fr; }
@@ -813,3 +848,90 @@ tr.late td { background: #fdecec; }
     .topbar { margin-bottom: 12px; }
     .topbar .eyebrow, .live-pill { display: none; }
 }
+
+/* ---------- ของหมด (admin-stock.js / out-of-stock.js) ---------- */
+.card-options li.is-out { color: var(--muted); text-decoration: line-through; }
+.card-wait, .card-changed {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 4px 10px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 700;
+}
+.card-wait { color: var(--blue); background: var(--blue-bg); }
+.card-changed { color: var(--green); background: var(--green-bg); }
+.card-removed { margin: 4px 0 6px; padding: 6px 10px; color: var(--red); background: var(--red-bg); border-radius: 8px; font-size: 13px; font-weight: 600; }
+
+.stock-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(40,20,30,0.45);
+}
+.stock-dialog.hidden { display: none; }
+.stock-box {
+    width: 100%;
+    max-width: 420px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    padding: 20px;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+}
+.stock-box h3 { margin: 0 0 4px; }
+.stock-box > p { margin: 0 0 12px; font-size: 14px; }
+#stock-list { margin-bottom: 14px; }
+.stock-row { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-bottom: 1px solid var(--line); font-weight: normal; cursor: pointer; }
+.stock-row input { width: 20px; height: 20px; flex: none; accent-color: var(--pink-dark); }
+.stock-option { padding-left: 24px; }
+
+/* ตัวแก้ตัวเลือก: ช่องติ๊ก "หมด" */
+.opt-out { margin: 0; color: var(--red); }
+.opt-row .opt-check input { flex: none; }
+
+/* ---------- หน้าต่างยกเลิก: ปุ่มเหตุผล (admin-cancel.js) ---------- */
+.reason-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.reason-btn {
+    padding: 11px 16px;
+    color: var(--text);
+    background: white;
+    border: 1.5px solid var(--line-strong);
+    border-radius: 99px;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+.reason-btn:hover { border-color: var(--pink-dark); }
+.reason-btn.is-picked { color: white; background: var(--pink-dark); border-color: var(--pink-dark); }
+.reason-other { margin-bottom: 12px; }
+.reason-hint { margin: 0 0 12px; padding: 8px 12px; color: var(--blue); background: var(--blue-bg); border-radius: 8px; font-size: 13px; }
+.btn.danger { background: var(--red); border-color: var(--red); }
+.btn.danger:hover { background: #8f1c13; }
+
+/* ---------- แถบ "แตะเพื่อเปิดเสียง" (main.js -> askSound) ---------- */
+.sound-bar {
+    position: fixed;
+    left: 50%;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    z-index: 950;
+    transform: translateX(-50%);
+    max-width: calc(100% - 32px);
+    padding: 12px 20px;
+    color: white;
+    background: var(--pink-deep);
+    border: none;
+    border-radius: 99px;
+    box-shadow: 0 8px 24px rgba(60,20,40,0.3);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    animation: sound-pulse 1.6s ease-in-out infinite;
+}
+@keyframes sound-pulse { 50% { box-shadow: 0 8px 24px rgba(60,20,40,0.3), 0 0 0 8px rgba(232,121,168,0.35); } }
+@media (prefers-reduced-motion: reduce) { .sound-bar { animation: none; } }

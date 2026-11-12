@@ -1,4 +1,21 @@
-// ลืมรหัสผ่าน (นักศึกษา): ยืนยันตัวตนด้วยรหัสนักศึกษา + ชื่อ + เบอร์โทรที่สมัครไว้ แล้วตั้งรหัสใหม่
+/* ==========================================================
+   forgot.js — หน้าลืมรหัสผ่านของนักศึกษา (forgot.html)
+   ต้องโหลดหลัง main.js
+
+   ขั้นตอน:
+   1) ยืนยันตัวตน: กรอกรหัสนักศึกษา + ชื่อ + เบอร์โทร ให้ตรงกับตอนสมัคร
+      (ผิดหลายครั้งจะโดนล็อกชั่วคราว กันคนสุ่มเดา)
+   2) ตั้งรหัสผ่านใหม่
+
+   สารบัญ
+   1. เตรียมหน้า (ช่องกรอก / ปุ่มแสดงรหัส)
+   2. ตัวช่วยแสดงข้อผิดพลาด
+   3. ขั้นที่ 1: ยืนยันตัวตน
+   4. ขั้นที่ 2: ตั้งรหัสผ่านใหม่
+========================================================== */
+
+
+/* ---------- 1. เตรียมหน้า ---------- */
 let verifiedStudent = null;   // รหัสนักศึกษาที่ยืนยันตัวตนผ่านแล้ว (เก็บในหน้านี้เท่านั้น)
 
 let verifyForm = document.getElementById('verify-form');
@@ -21,6 +38,9 @@ document.querySelectorAll('[data-toggle-pass]').forEach(function (btn) {
     });
 });
 
+/* ---------- 2. ตัวช่วยแสดงข้อผิดพลาด ---------- */
+
+// แสดงข้อความผิดใต้ช่องกรอก คืนค่า true = ไม่มีข้อผิดพลาด
 function fpError(id, text) {
     let field = document.getElementById(id).closest('.field');
     field.classList.toggle('invalid', !!text);
@@ -42,6 +62,7 @@ function verifyMessage(html) {
     });
 });
 
+/* ---------- 3. ขั้นที่ 1: ยืนยันตัวตน ---------- */
 verifyForm.addEventListener('submit', function (event) {
     event.preventDefault();
     let student = document.getElementById('fp-student').value.trim();
@@ -85,6 +106,7 @@ verifyForm.addEventListener('submit', function (event) {
     document.getElementById('fp-pass').focus();
 });
 
+/* ---------- 4. ขั้นที่ 2: ตั้งรหัสผ่านใหม่ ---------- */
 resetForm.addEventListener('submit', function (event) {
     event.preventDefault();
     if (!verifiedStudent) { location.reload(); return; }

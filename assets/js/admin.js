@@ -1,8 +1,31 @@
 /* ==========================================================
-   admin.js — หน้าจัดการร้านค้า (admin.html)
-   ต้องโหลดหลัง main.js, order-timer.js (นับถอยหลัง), admin-options.js (ตัวเลือกเมนู) และ admin-board.js (กระดานออเดอร์)
-   ใช้ข้อมูลชุดเดียวกับหน้าลูกค้า: food_orders / food_stores / food_data
+   admin.js — หน้าจัดการร้านค้า (admin.html) ไฟล์หลักของหน้าร้าน
    ล็อกอินด้วยรหัสร้าน (SHOP01…) + PIN (เริ่มต้น 1234)
+
+   หน้าร้านแบ่งงานเป็นหลายไฟล์ (โหลดก่อนไฟล์นี้ ตามลำดับใน admin.html):
+   - noshow.js        กติกาลูกค้าไม่มารับ
+   - out-of-stock.js  กติกาของหมด -> ลูกค้าเลือกของแทน
+   - order-timer.js   นับถอยหลัง + เตือนออเดอร์ที่ร้านยังไม่รับ
+   - admin-options.js แก้ตัวเลือกเมนู (หมู/ไก่)
+   - admin-stock.js   หน้าต่าง "ของหมด"
+   - admin-cancel.js  หน้าต่างยกเลิกออเดอร์
+   - admin-board.js   กระดานออเดอร์ 3 คอลัมน์
+
+   สารบัญไฟล์นี้ (ค้นด้วย Ctrl+F เช่น "6. ")
+   1. ข้อความเด้ง
+   2. ข้อมูลร้าน
+   3. เข้าสู่ระบบ / ออกจากระบบ
+   4. สลับหน้า
+   5. วาดหน้าจอ
+   6. ตรวจออเดอร์ใหม่
+   7. จัดการออเดอร์ (ปุ่มรับ / ทำเสร็จ / ยกเลิก ...)
+   8. จัดการเมนู
+   9. รูปภาพ
+   10. ตั้งค่าร้าน
+   11. ผูกปุ่มต่างๆ
+   12. สมัครร้านค้าใหม่
+   13. ลืมรหัสผ่านร้าน
+   14. เริ่มต้น
 ========================================================== */
 
 const ADMIN_STATUS = {
@@ -30,7 +53,7 @@ let toastTimer = null;
 
 function $(id) { return document.getElementById(id); }
 
-/* ---------- ข้อความเด้ง ---------- */
+/* ---------- 1. ข้อความเด้ง ---------- */
 function adminToast(text) {
     let box = $('toast');
     box.textContent = text;
@@ -38,7 +61,7 @@ function adminToast(text) {
     toastTimer = setTimeout(function () { box.textContent = ''; }, 3500);
 }
 
-/* ---------- ข้อมูลร้าน ---------- */
+/* ---------- 2. ข้อมูลร้าน ---------- */
 function adminConfig() {
     return getStoreConfigs()[adminStore.id];
 }
@@ -69,7 +92,7 @@ function itemsText(o) {
     }).join('<br>');
 }
 
-/* ---------- เข้าสู่ระบบ / ออกจากระบบ ---------- */
+/* ---------- 3. เข้าสู่ระบบ / ออกจากระบบ ---------- */
 function findStoreIdByCode(code) {
     let configs = getStoreConfigs();
     return Object.keys(configs).find(function (id) {
@@ -118,9 +141,10 @@ function startApp(storeId) {
     renderAll();
     if (!pollTimer) pollTimer = setInterval(checkChanges, 2000);
     startLateCheck();   // เริ่มนับถอยหลัง + เตือนออเดอร์ค้าง (order-timer.js)
+    askSound();         // เบราว์เซอร์ยังบล็อกเสียง -> โชว์แถบให้แตะเปิดเสียง (main.js)
 }
 
-/* ---------- สลับหน้า ---------- */
+/* ---------- 4. สลับหน้า ---------- */
 function showView(name) {
     if (!VIEW_TITLES[name]) name = 'overview';
     currentView = name;
@@ -134,7 +158,7 @@ function showView(name) {
     if (name === 'settings') renderSettings();
 }
 
-/* ---------- วาดหน้าจอ ---------- */
+/* ---------- 5. วาดหน้าจอ ---------- */
 function renderAll() {
     if (!adminStore) return;
     let cfg = adminConfig();
@@ -269,7 +293,7 @@ function renderSettings() {
     storeImage.set(adminStore.image || '');
 }
 
-/* ---------- ตรวจออเดอร์ใหม่ (จากแท็บลูกค้า) ---------- */
+/* ---------- 6. ตรวจออเดอร์ใหม่ (จากแท็บลูกค้า) ---------- */
 function checkChanges() {
     if (!adminStore) return;
     let raw = localStorage.getItem('food_orders');
@@ -284,7 +308,7 @@ function checkChanges() {
     renderAll();
 }
 
-/* ---------- จัดการออเดอร์ ---------- */
+/* ---------- 7. จัดการออเดอร์ ---------- */
 function orderAct(act, id) {
     let orders = loadOrders();
     let o = orders.find(function (x) { return x.id === id; });
@@ -292,13 +316,20 @@ function orderAct(act, id) {
     let now = Date.now();
     let allowed = {
         accept: ['new'], ready: ['new', 'cooking'], done: ['ready'],
-        cancel: ['new', 'cooking'], recall: ['ready'], noshow: ['ready']
+        cancel: ['new', 'cooking'], recall: ['ready'], noshow: ['ready'], stock: ['new', 'cooking']
     };
     if (!allowed[act] || allowed[act].indexOf(o.status) === -1) {
         adminToast('สถานะออเดอร์เปลี่ยนไปแล้ว');
         renderAll();
         return;
     }
+    // ยังรอลูกค้าเลือกของแทนอยู่ -> ห้ามกดทำเสร็จ (ร้านยังไม่รู้ว่าต้องใส่อะไร)
+    if (act === 'ready' && hasPendingChoice(o)) {
+        adminToast('คิว ' + o.queue + ' ยังรอลูกค้าเลือกของแทน (ไม่เกิน ' + CHOOSE_MINUTES + ' นาที)');
+        return;
+    }
+    if (act === 'stock') { openStockDialog(o); return; }   // ของหมด -> เปิดหน้าต่างเลือก (admin-stock.js)
+    if (act === 'cancel') { openCancelDialog(o); return; } // ยกเลิก -> เปิดหน้าต่างเลือกเหตุผล (admin-cancel.js)
     if (act === 'accept') { o.status = 'cooking'; o.acceptedAt = now; }
     if (act === 'ready') { o.status = 'ready'; o.readyAt = now; if (!o.acceptedAt) o.acceptedAt = now; }
     // ลูกค้ารับอาหาร + จ่ายเงินสดแล้ว (จ่ายที่ร้านอย่างเดียว จึงจบในปุ่มเดียว)
@@ -315,14 +346,6 @@ function orderAct(act, id) {
         o.status = 'noshow';
         o.noShowAt = now;
     }
-    if (act === 'cancel') {
-        let reason = prompt('เหตุผลที่ยกเลิก (ลูกค้าจะเห็นข้อความนี้)', 'วัตถุดิบหมด');
-        if (reason === null) return;
-        o.status = 'cancelled';
-        o.cancelledBy = 'store';
-        o.cancelReason = reason.trim() || 'ร้านยกเลิก';
-        o.cancelledAt = now;
-    }
     o.updatedAt = now;
     saveOrders(orders);
     if (act === 'ready' || act === 'recall') adminToast('📢 เรียกคิว ' + o.queue + ' แล้ว');
@@ -331,14 +354,16 @@ function orderAct(act, id) {
 
 // เรียกคิวถัดไป: คิวที่กำลังทำเก่าสุด (ถ้าไม่มี ใช้คิวใหม่เก่าสุด) -> พร้อมรับ
 function callNextQueue() {
-    let orders = adminOrders().sort(function (a, b) { return a.createdAt - b.createdAt; });
+    // ข้ามคิวที่ยังรอลูกค้าเลือกของแทน (out-of-stock.js)
+    let orders = adminOrders().filter(function (o) { return !hasPendingChoice(o); })
+        .sort(function (a, b) { return a.createdAt - b.createdAt; });
     let next = orders.find(function (o) { return o.status === 'cooking'; }) ||
                orders.find(function (o) { return o.status === 'new'; });
     if (!next) { adminToast('ไม่มีคิวที่รออยู่'); return; }
     orderAct('ready', next.id);
 }
 
-/* ---------- จัดการเมนู ---------- */
+/* ---------- 8. จัดการเมนู ---------- */
 function storeInData() {
     for (let f of foodData) {
         for (let s of f.stores) if (s.id === adminStore.id) return s;
@@ -359,6 +384,7 @@ function menuAct(act, id) {
     if (act === 'toggle') {
         menu.available = menu.available === false;
         saveMenus();
+        if (menu.available === false) notifyOutOfStock();   // ตั้งเป็นหมด -> แจ้งลูกค้าที่สั่งไว้ (admin-stock.js)
     }
     if (act === 'edit') openMenuForm(menu);
     if (act === 'delete') {
@@ -369,7 +395,7 @@ function menuAct(act, id) {
     }
 }
 
-/* ---------- รูปภาพ: อ่านไฟล์ + ย่อขนาดก่อนเก็บ (localStorage มีพื้นที่จำกัด) ---------- */
+/* ---------- 9. รูปภาพ: อ่านไฟล์ + ย่อขนาดก่อนเก็บ (localStorage มีพื้นที่จำกัด) ---------- */
 function readImageFile(file, done) {
     if (!file) return;
     resizeImageFile(file, 640, done, adminToast);
@@ -446,9 +472,10 @@ function saveMenuForm(event) {
     adminStore = findStore(adminStore.id);
     renderAll();
     adminToast('บันทึกเมนูแล้ว');
+    notifyOutOfStock();   // ถ้าติ๊กตัวเลือกไหนเป็น "หมด" -> แจ้งลูกค้าที่สั่งไว้ (admin-stock.js)
 }
 
-/* ---------- ตั้งค่า ---------- */
+/* ---------- 10. ตั้งค่า ---------- */
 function saveSettings(event) {
     event.preventDefault();
     let name = $('setting-name').value.trim();
@@ -478,7 +505,7 @@ function saveSettings(event) {
     adminToast(oldName !== name ? 'บันทึกแล้ว เปลี่ยนชื่อร้านเป็น "' + name + '"' : 'บันทึกการตั้งค่าแล้ว');
 }
 
-/* ---------- ผูกปุ่มต่างๆ ---------- */
+/* ---------- 11. ผูกปุ่มต่างๆ ---------- */
 $('login-form').addEventListener('submit', adminLogin);
 $('logout-btn').addEventListener('click', adminLogout);
 $('order-search').addEventListener('input', renderAll);
@@ -523,7 +550,7 @@ window.addEventListener('storage', function (e) {
     if (lastOrdersRaw === null) renderAll();
 });
 
-/* ---------- สมัครร้านค้าใหม่ ---------- */
+/* ---------- 12. สมัครร้านค้าใหม่ ---------- */
 function showAuth(which) {
     $('login-form').classList.toggle('hidden', which !== 'login');
     $('register-form').classList.toggle('hidden', which !== 'register');
@@ -541,7 +568,7 @@ function showAuth(which) {
     history.replaceState(null, '', which === 'register' || which === 'forgot' ? '#' + which : location.pathname);
 }
 
-/* ---------- ลืมรหัสผ่านร้าน: ยืนยันด้วยรหัสร้าน + เบอร์โทรร้าน ---------- */
+/* ---------- 13. ลืมรหัสผ่านร้าน: ยืนยันด้วยรหัสร้าน + เบอร์โทรร้าน ---------- */
 let forgotStoreId = null;   // ร้านที่ยืนยันตัวตนผ่านแล้ว
 
 function resetForgot() {
@@ -697,7 +724,7 @@ document.addEventListener('click', function (e) {
     if (a) { e.preventDefault(); showAuth(a.dataset.auth); }
 });
 
-/* ---------- เริ่มต้น: ถ้าล็อกอินอยู่แล้วในแท็บนี้ เข้าแอปเลย ---------- */
+/* ---------- 14. เริ่มต้น: ถ้าล็อกอินอยู่แล้วในแท็บนี้ เข้าแอปเลย ---------- */
 (function init() {
     let s = null;
     try { s = JSON.parse(sessionStorage.getItem('food_merchant')); } catch (e) { s = null; }
