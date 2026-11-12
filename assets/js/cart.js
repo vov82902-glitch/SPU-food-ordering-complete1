@@ -29,11 +29,15 @@ if (user === null) {
         if (found.menu) { item.name = found.menu.name; }
         if (item.image && /^data:/.test(item.image)) delete item.image; // ไม่เก็บรูปซ้ำในตะกร้า
         let image = found.menu ? found.menu.image : item.image;
-        if (found.menu) { item.menuId = found.menu.id; item.price = found.menu.price; }
+        // คิดราคาใหม่จากเมนูจริง (ราคาเมนู + ตัวเลือก) กันราคาในตะกร้าไม่ตรง
+        let newPrice = found.menu ? priceWithOptions(found.menu, item.options) : null;
+        if (found.menu) item.menuId = found.menu.id;
+        if (newPrice !== null) item.price = newPrice;
         let warn = '';
         if (!found.store || !found.menu) warn = 'ไม่มีเมนูนี้แล้ว';
         else if (!configs[found.store.id].open) warn = 'ร้านปิดอยู่';
         else if (found.menu.available === false) warn = 'เมนูนี้หมดแล้ว';
+        else if (newPrice === null) warn = 'ร้านเปลี่ยนตัวเลือกของเมนูนี้แล้ว';
         if (warn) problem = true;
 
         html += '<div class="box' + (warn ? ' is-soldout' : '') + '">';
@@ -41,6 +45,7 @@ if (user === null) {
             html += '<img src="' + esc(image) + '" alt="ภาพตัวอย่างอาหาร">';
         }
         html += '<h3>' + esc(item.name) + '</h3>';
+        if (optionNames(item)) html += '<p class="option-line">' + esc(optionNames(item)) + '</p>';
         if (warn) html += '<p class="closed-note">' + warn + ' กรุณาลบออก</p>';
         html += '<p>' + esc(item.store) + ' ชั้น ' + esc(item.floor) + '</p>';
         if (item.note) html += '<p class="note-box">หมายเหตุ: ' + esc(item.note) + '</p>';
@@ -140,10 +145,12 @@ function placeOrder() {
         if (!found.store || !found.menu) { alert('ไม่พบเมนู ' + item.name + ' แล้ว'); location.reload(); return; }
         if (!configs[found.store.id].open) { alert('ร้าน ' + found.store.name + ' ปิดอยู่ตอนนี้'); location.reload(); return; }
         if (found.menu.available === false) { alert(item.name + ' หมดแล้ว'); location.reload(); return; }
+        let price = priceWithOptions(found.menu, item.options);   // ราคาจริง ณ ตอนกดสั่ง
+        if (price === null) { alert('ร้านเปลี่ยนตัวเลือกของ ' + item.name + ' แล้ว'); location.reload(); return; }
         let sid = found.store.id;
         if (!groups[sid]) groups[sid] = { store: found.store, items: [] };
         groups[sid].items.push({
-            menuId: found.menu.id, name: found.menu.name, price: found.menu.price,
+            menuId: found.menu.id, name: found.menu.name, price: price, options: item.options || [],
             image: /^data:/.test(found.menu.image || '') ? '' : (found.menu.image || ''), store: found.store.name, floor: found.store.floorId,
             note: item.note, quantity: item.quantity
         });

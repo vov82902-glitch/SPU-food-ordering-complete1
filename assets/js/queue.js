@@ -111,7 +111,7 @@ function renderQueue() {
 
         html += '<ul class="ticket-items">';
         for (let item of order.items) {
-            html += '<li><span>' + esc(item.name) + ' <em>× ' + item.quantity + '</em></span><span>' + (item.price * item.quantity) + '</span>';
+            html += '<li><span>' + itemTitle(item) + ' <em>× ' + item.quantity + '</em></span><span>' + (item.price * item.quantity) + '</span>';
             if (item.note) html += '<small class="item-note">หมายเหตุ: ' + esc(item.note) + '</small>';
             html += '</li>';
         }

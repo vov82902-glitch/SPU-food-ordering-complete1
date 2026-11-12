@@ -124,7 +124,7 @@ function showHistory() {
         let foods = [];
         for (let j = 0; j < order.items.length; j++) {
             let item = order.items[j];
-            foods.push(esc(item.name) + ' × ' + item.quantity);
+            foods.push(itemTitle(item) + ' × ' + item.quantity);   // itemTitle = ชื่อ + ตัวเลือก (main.js)
         }
 
         html += '<article class="history-item">';

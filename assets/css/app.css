@@ -893,3 +893,32 @@ form[hidden], .reset-done[hidden] { display: none; }
     .profile-info { text-align: left; }
     .profile-stats { grid-template-columns: 1fr; }
 }
+
+/* ---------- หน้าต่างเลือกตัวเลือกเมนู (menu-options.js) ---------- */
+.dialog .options-box { max-width: 440px; max-height: 90vh; overflow-y: auto; }
+.option-group { margin: 0 0 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
+.option-group legend { padding: 0 6px; font-weight: 700; color: var(--text); }
+.option-group legend small { color: var(--muted); font-weight: 400; }
+.option-choice { display: flex; align-items: center; gap: 10px; padding: 7px 4px; cursor: pointer; }
+.option-choice input { width: 18px; height: 18px; accent-color: var(--pink-dark); }
+.option-choice span { flex: 1; }
+.option-choice b { color: var(--pink-deep); font-size: 14px; }
+.options-note-label { display: block; margin: 4px 0 5px; font-size: 13px; font-weight: 600; }
+.options-box textarea {
+    width: 100%;
+    min-height: 60px;
+    padding: 8px 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    font: inherit;
+    resize: vertical;
+}
+.options-box .field-error { margin: 8px 0 0; }
+.options-box .dialog-actions { margin-top: 14px; }
+.dialog-actions .btn-add { color: white; background: var(--pink-dark); border: 1px solid var(--pink-dark); }
+.dialog-actions .btn-add:hover { background: var(--pink-deep); }
+
+/* ตัวเลือกที่ลูกค้าเลือก (ตะกร้า / คิว / ประวัติ) */
+.item-options { color: var(--muted); font-size: 0.9em; }
+#cart-list p.option-line { color: var(--pink-deep); font-weight: 600; }
+#menu-list p.option-hint { color: var(--muted); font-size: 13px; }

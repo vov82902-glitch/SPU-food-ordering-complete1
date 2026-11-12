@@ -1,6 +1,6 @@
 /* ==========================================================
    admin.js — หน้าจัดการร้านค้า (admin.html)
-   ต้องโหลดหลัง assets/js/main.js
+   ต้องโหลดหลัง main.js, order-timer.js (นับถอยหลัง), admin-options.js (ตัวเลือกเมนู) และ admin-board.js (กระดานออเดอร์)
    ใช้ข้อมูลชุดเดียวกับหน้าลูกค้า: food_orders / food_stores / food_data
    ล็อกอินด้วยรหัสร้าน (SHOP01…) + PIN (เริ่มต้น 1234)
 ========================================================== */
@@ -63,7 +63,9 @@ function badge(status) {
 
 function itemsText(o) {
     return o.items.map(function (it) {
-        return esc(it.name) + ' ×' + it.quantity + (it.note ? ' <small class="muted">(' + esc(it.note) + ')</small>' : '');
+        // ตัวเลือกแสดงตัวหนาให้แม่ค้าเห็นชัด เช่น "ข้าวผัดกะเพรา ×1" แล้วบรรทัดใหม่ "หมูกรอบ, ไข่ดาว, เผ็ดน้อย"
+        let options = optionNames(it) ? '<br><b class="item-options">' + esc(optionNames(it)) + '</b>' : '';
+        return esc(it.name) + ' ×' + it.quantity + options + (it.note ? ' <small class="muted">(' + esc(it.note) + ')</small>' : '');
     }).join('<br>');
 }
 
@@ -96,6 +98,7 @@ function adminLogout() {
     sessionStorage.removeItem('food_merchant');
     clearInterval(pollTimer);
     pollTimer = null;
+    stopLateCheck();    // หยุดจับเวลา (order-timer.js)
     adminStore = null;
     $('app').classList.add('hidden');
     $('login-screen').classList.remove('hidden');
@@ -113,9 +116,10 @@ function startApp(storeId) {
     seenSlips = adminOrders().filter(function (o) { return payInfo(o).status === 'pending'; })
         .map(function (o) { return o.id + payInfo(o).sentAt; });
     lastOrdersRaw = null;
-    showView('overview');
+    showView('orders');   // เปิดมาเจอกระดานออเดอร์เลย
     renderAll();
     if (!pollTimer) pollTimer = setInterval(checkChanges, 2000);
+    startLateCheck();   // เริ่มนับถอยหลัง + เตือนออเดอร์ค้าง (order-timer.js)
 }
 
 /* ---------- สลับหน้า ---------- */
@@ -152,6 +156,7 @@ function renderAll() {
     $('nav-order-count').style.display = count('new') > 0 ? '' : 'none';
 
     renderOverview(orders, count);
+    renderBoard(orders);   // กระดานออเดอร์ 3 คอลัมน์ (admin-board.js)
     renderOrders(orders);
     renderQueue(orders, count);
     renderMenu();
@@ -176,7 +181,7 @@ function renderOverview(orders, count) {
         .sort(function (a, b) { return a.createdAt - b.createdAt; });
     $('queue-summary').innerHTML = active.length
         ? '<div class="order-list">' + active.map(function (o) {
-            return '<div><b>' + esc(o.queue) + '</b> ' + badge(o.status) + '</div>';
+            return '<div><b>' + esc(o.queue) + '</b> ' + badge(o.status) + ' ' + countdownHtml(o) + '</div>';
         }).join('') + '</div>'
         : '';
 }
@@ -218,7 +223,8 @@ function renderOrders(orders) {
     if (list.length === 0) { $('orders-container').innerHTML = ''; return; }
     let h = '<table><thead><tr><th>คิว</th><th>ลูกค้า</th><th>รายการ</th><th>รวม</th><th>ชำระเงิน</th><th>เวลา</th><th>สถานะ</th><th></th></tr></thead><tbody>';
     list.forEach(function (o) {
-        h += '<tr><td><b>' + esc(o.queue) + '</b></td>' +
+        // ออเดอร์ใหม่ -> โชว์นับถอยหลังใต้เลขคิว / ค้างนาน -> แถวสีแดง
+        h += '<tr' + (isLate(o) ? ' class="late"' : '') + '><td><b>' + esc(o.queue) + '</b><br>' + countdownHtml(o) + '</td>' +
             '<td>' + esc(o.name || '-') + '<br><small class="muted">' + esc(o.student) + '</small></td>' +
             '<td>' + itemsText(o) + '</td>' +
             '<td>' + o.total + ' ฿</td>' +
@@ -256,7 +262,13 @@ function renderMenu() {
         let thumb = m.image
             ? '<img class="menu-thumb" src="' + esc(m.image) + '" alt="">'
             : '<span class="menu-thumb none">ไม่มีรูป</span>';
-        h += '<tr><td>' + thumb + esc(m.name) + '</td><td>' + m.price + ' ฿</td>' +
+        // บอกว่าเมนูนี้มีตัวเลือกกี่กลุ่ม เช่น "ตัวเลือก: เลือกเนื้อสัตว์, เพิ่มเติม"
+        let optionInfo = '';
+        if (m.options && m.options.length > 0) {
+            let titles = m.options.map(function (group) { return group.title; });
+            optionInfo = '<br><small class="muted">ตัวเลือก: ' + esc(titles.join(', ')) + '</small>';
+        }
+        h += '<tr><td>' + thumb + esc(m.name) + optionInfo + '</td><td>' + m.price + ' ฿</td>' +
             '<td><span class="badge ' + (on ? 'ready' : 'cancelled') + '">' + (on ? 'พร้อมขาย' : 'หมด') + '</span></td>' +
             '<td class="nowrap"><button class="btn ghost" data-menu="toggle" data-id="' + m.id + '">' + (on ? 'ตั้งเป็นหมด' : 'เปิดขาย') + '</button> ' +
             '<button class="btn ghost" data-menu="edit" data-id="' + m.id + '">แก้ไข</button> ' +
@@ -493,6 +505,7 @@ function openMenuForm(menu) {
     $('menu-name').value = menu ? menu.name : '';
     $('menu-price').value = menu ? menu.price : '';
     menuImage.set(menu ? menu.image : '');
+    startOptionsEditor(menu);   // ตัวเลือกของเมนู (admin-options.js)
     $('menu-name').focus();
 }
 
@@ -501,14 +514,16 @@ function saveMenuForm(event) {
     let name = $('menu-name').value.trim();
     let price = Number($('menu-price').value);
     if (!name || !(price >= 0)) { adminToast('กรุณากรอกชื่อและราคาให้ถูกต้อง'); return; }
+    let options = optionsForSave();   // ตรวจตัวเลือก (admin-options.js) null = มีข้อผิดพลาด
+    if (options === null) return;
     let store = storeInData();
     let id = $('menu-id').value;
     if (id) {
         let menu = store.menus.find(function (m) { return m.id === Number(id); });
-        if (menu) { menu.name = name; menu.price = price; menu.image = menuImage.value; }
+        if (menu) { menu.name = name; menu.price = price; menu.image = menuImage.value; menu.options = options; }
     } else {
         let maxId = store.menus.reduce(function (mx, m) { return Math.max(mx, m.id || 0); }, store.id * 100);
-        store.menus.push({ id: maxId + 1, name: name, price: price, available: true, image: menuImage.value });
+        store.menus.push({ id: maxId + 1, name: name, price: price, available: true, image: menuImage.value, options: options });
     }
     if (!trySaveFoodData()) { renderAll(); return; }
     $('menu-form').classList.add('hidden');

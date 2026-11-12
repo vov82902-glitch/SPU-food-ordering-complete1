@@ -157,7 +157,12 @@
       </section>
 
       <section id="view-orders" class="view hidden">
-        <div class="toolbar"><div><h2>รายการออเดอร์</h2><p class="muted">รับออเดอร์และอัปเดตสถานะการทำอาหาร</p></div><div class="filters"><input id="order-search" placeholder="ค้นหาเลขออเดอร์ / ชื่อลูกค้า"><select id="status-filter"><option value="all">ทุกสถานะ</option><option value="new">ออเดอร์ใหม่</option><option value="cooking">กำลังทำ</option><option value="ready">พร้อมรับ</option><option value="done">สำเร็จ</option><option value="cancelled">ยกเลิก</option></select></div></div>
+        <!-- กระดานออเดอร์ 3 คอลัมน์ (วาดด้วย admin-board.js) -->
+        <div class="toolbar"><div><h2>ออเดอร์ที่ต้องทำ</h2><p class="muted">ออเดอร์ที่มาก่อนอยู่บนสุด · กดปุ่มใต้การ์ดเพื่อเลื่อนไปขั้นถัดไป</p></div></div>
+        <div id="order-board" class="board"></div>
+
+        <!-- ตารางออเดอร์ทั้งหมด (ไว้ค้นหาย้อนหลัง) -->
+        <div class="toolbar history-toolbar"><div><h2>ออเดอร์ทั้งหมด</h2><p class="muted">ค้นหาและดูออเดอร์ย้อนหลัง</p></div><div class="filters"><input id="order-search" placeholder="ค้นหาเลขออเดอร์ / ชื่อลูกค้า"><select id="status-filter"><option value="all">ทุกสถานะ</option><option value="new">ออเดอร์ใหม่</option><option value="cooking">กำลังทำ</option><option value="ready">พร้อมรับ</option><option value="done">สำเร็จ</option><option value="cancelled">ยกเลิก</option></select></div></div>
         <div id="orders-container" class="panel table-panel"></div>
       </section>
 
@@ -183,6 +188,12 @@
               <small class="muted">ระบบจะย่อรูปให้อัตโนมัติ (ไม่เกิน 640px)</small>
             </div>
           </div>
+          <!-- ตัวเลือกของเมนู เช่น หมู/ไก่, ไข่ดาว (ควบคุมด้วย admin-options.js) -->
+          <fieldset id="options-fieldset" class="options-editor">
+            <legend>ตัวเลือกของเมนู <small class="muted">เช่น เลือกเนื้อสัตว์, เพิ่มไข่ดาว</small></legend>
+            <div id="options-editor"></div>
+            <button type="button" class="btn ghost" data-action="add-group">+ เพิ่มกลุ่มตัวเลือก</button>
+          </fieldset>
           <div class="form-actions"><button type="button" id="cancel-menu" class="btn ghost">ยกเลิก</button><button class="btn primary" type="submit">บันทึกเมนู</button></div>
         </form>
       </section>
@@ -243,6 +254,6 @@
   </div>
   <div id="toast" class="toast" role="status"></div>
   <audio id="notify-audio" preload="auto"><source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=" type="audio/wav"></audio>
-<script src="assets/js/cloud.js" data-load="assets/js/main.js assets/js/admin.js"></script>
+<script src="assets/js/cloud.js" data-load="assets/js/main.js assets/js/order-timer.js assets/js/admin-options.js assets/js/admin-board.js assets/js/admin.js"></script>
 </body>
 </html>

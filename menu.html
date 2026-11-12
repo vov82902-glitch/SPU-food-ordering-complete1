@@ -39,7 +39,23 @@
         </div>
         <div id="menu-list"></div>
     </main>
+
+    <!-- หน้าต่างเลือกตัวเลือกเมนู (ควบคุมด้วย menu-options.js) -->
+    <div id="options-dialog" class="dialog" hidden>
+        <form id="options-form" class="dialog-box options-box" role="dialog" aria-modal="true" aria-labelledby="options-title" novalidate>
+            <h3 id="options-title">ชื่อเมนู</h3>
+            <p id="options-base">ราคาเริ่มต้น</p>
+            <div id="options-groups"></div>
+            <label for="options-note" class="options-note-label">หมายเหตุ</label>
+            <textarea id="options-note" maxlength="200" placeholder="เช่น ไม่ใส่ถั่วฝักยาว"></textarea>
+            <p id="options-error" class="field-error" role="alert"></p>
+            <div class="dialog-actions">
+                <button type="button" class="btn-plain" id="options-cancel">ยกเลิก</button>
+                <button type="submit" class="btn-add" id="options-add">เพิ่มลงตะกร้า</button>
+            </div>
+        </form>
+    </div>
     <footer class="site-footer"><b>SPU Food Ordering</b> · รับชำระเงินสดและ QR พร้อมเพย์</footer>
-    <script src="assets/js/cloud.js" data-load="assets/js/main.js assets/js/menu.js"></script>
+    <script src="assets/js/cloud.js" data-load="assets/js/main.js assets/js/menu-options.js assets/js/menu.js"></script>
 </body>
 </html>

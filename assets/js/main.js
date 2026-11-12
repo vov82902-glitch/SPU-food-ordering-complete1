@@ -9,9 +9,43 @@ let foodData = [
                 image: "https://placehold.co/400x240?text=Shop+1",
                 menus: [
                     {
-                        name: 'ข้าวกะเพราหมูสับ',
+                        name: 'ข้าวผัดกะเพรา',
                         price: 45,
-                        image: "https://placehold.co/400x240?text=Food+1"
+                        image: "https://placehold.co/400x240?text=Food+1",
+                        // ตัวเลือกของเมนู (ดูคำอธิบายใน menu-options.js)
+                        // required: true = ต้องเลือก / multiple: true = เลือกได้หลายอย่าง
+                        options: [
+                            {
+                                title: 'เลือกเนื้อสัตว์',
+                                required: true,
+                                multiple: false,
+                                choices: [
+                                    { name: 'หมูสับ', price: 0 },
+                                    { name: 'ไก่', price: 0 },
+                                    { name: 'หมูกรอบ', price: 10 },
+                                    { name: 'ทะเล', price: 20 }
+                                ]
+                            },
+                            {
+                                title: 'เพิ่มเติม',
+                                required: false,
+                                multiple: true,
+                                choices: [
+                                    { name: 'ไข่ดาว', price: 10 },
+                                    { name: 'ไข่เจียว', price: 10 }
+                                ]
+                            },
+                            {
+                                title: 'ระดับความเผ็ด',
+                                required: true,
+                                multiple: false,
+                                choices: [
+                                    { name: 'ไม่เผ็ด', price: 0 },
+                                    { name: 'เผ็ดน้อย', price: 0 },
+                                    { name: 'เผ็ดมาก', price: 0 }
+                                ]
+                            }
+                        ]
                     },
                     {
                         name: 'ข้าวผัดหมู',
@@ -28,7 +62,29 @@ let foodData = [
                     {
                         name: 'ก๋วยเตี๋ยวหมู',
                         price: 40,
-                        image: "https://placehold.co/400x240?text=Food+3"
+                        image: "https://placehold.co/400x240?text=Food+3",
+                        options: [
+                            {
+                                title: 'เลือกเส้น',
+                                required: true,
+                                multiple: false,
+                                choices: [
+                                    { name: 'เส้นเล็ก', price: 0 },
+                                    { name: 'เส้นใหญ่', price: 0 },
+                                    { name: 'บะหมี่', price: 0 },
+                                    { name: 'วุ้นเส้น', price: 0 }
+                                ]
+                            },
+                            {
+                                title: 'ขนาด',
+                                required: true,
+                                multiple: false,
+                                choices: [
+                                    { name: 'ธรรมดา', price: 0 },
+                                    { name: 'พิเศษ', price: 10 }
+                                ]
+                            }
+                        ]
                     },
                     {
                         name: 'ก๋วยเตี๋ยวต้มยำ',
@@ -143,9 +199,70 @@ function loadFoodData() {
             store.menus.forEach(function (menu, i) {
                 if (menu.id == null) menu.id = store.id * 100 + i + 1;
                 if (menu.available == null) menu.available = true;
+                if (menu.options === undefined) addDefaultOptions(store, menu);
             });
         });
     });
+}
+
+// เมนูที่บันทึกไว้ก่อนมีระบบตัวเลือก -> เติมตัวเลือกตัวอย่างจาก foodData ด้านบน (ถ้ามี)
+function addDefaultOptions(store, menu) {
+    defaultFoodData.forEach(function (floor) {
+        floor.stores.forEach(function (defaultStore) {
+            if (defaultStore.id !== store.id) return;
+            defaultStore.menus.forEach(function (defaultMenu, i) {
+                if (store.id * 100 + i + 1 === menu.id && defaultMenu.options) {
+                    menu.name = defaultMenu.name;
+                    menu.options = JSON.parse(JSON.stringify(defaultMenu.options));
+                }
+            });
+        });
+    });
+}
+
+/* ---------- ตัวเลือกเมนู (เช่น หมู/ไก่, ไข่ดาว) ใช้ร่วมกันหลายหน้า ---------- */
+
+// ชื่อตัวเลือกที่ลูกค้าเลือก เช่น "หมูสับ, ไข่ดาว, เผ็ดน้อย" (ไม่มีตัวเลือก = "")
+function optionNames(item) {
+    if (!item.options || item.options.length === 0) return '';
+    let names = [];
+    for (let i = 0; i < item.options.length; i++) {
+        names.push(item.options[i].name);
+    }
+    return names.join(', ');
+}
+
+// ชื่อเมนู + ตัวเลือก (กัน HTML แล้ว) เช่น "ข้าวผัดกะเพรา (หมูสับ, ไข่ดาว)"
+function itemTitle(item) {
+    let names = optionNames(item);
+    if (names === '') return esc(item.name);
+    return esc(item.name) + ' <small class="item-options">(' + esc(names) + ')</small>';
+}
+
+// คิดราคาใหม่จากเมนูปัจจุบัน = ราคาเมนู + ราคาตัวเลือกที่เลือก
+// ถ้าร้านลบตัวเลือกนั้นไปแล้ว -> คืนค่า null (ให้หน้าตะกร้าแจ้งลูกค้า)
+function priceWithOptions(menu, chosen) {
+    let total = menu.price;
+    if (!chosen) return total;
+
+    for (let i = 0; i < chosen.length; i++) {
+        let choice = findChoice(menu, chosen[i].group, chosen[i].name);
+        if (choice === null) return null;
+        total = total + choice.price;
+    }
+    return total;
+}
+
+// หาตัวเลือกในเมนูจาก "ชื่อกลุ่ม" + "ชื่อตัวเลือก" (ไม่เจอ = null)
+function findChoice(menu, groupTitle, choiceName) {
+    let groups = menu.options || [];
+    for (let g = 0; g < groups.length; g++) {
+        if (groups[g].title !== groupTitle) continue;
+        for (let c = 0; c < groups[g].choices.length; c++) {
+            if (groups[g].choices[c].name === choiceName) return groups[g].choices[c];
+        }
+    }
+    return null;
 }
 
 function saveFoodData() {

@@ -659,3 +659,95 @@ footer span { margin-left: 6px; color: var(--pink-dark); }
         transition-duration: 0.01ms !important;
     }
 }
+
+/* ---------- ออเดอร์ที่ร้านยังไม่รับนานเกินไป ---------- */
+tr.late td { background: #fdecec; }
+
+/* ตัวนับถอยหลัง: ปกติสีส้ม / เลยเวลาแล้วสีแดง */
+.countdown { color: #b26a00; font-weight: 600; white-space: nowrap; }
+.countdown.over { color: #c62828; }
+
+/* ตัวเลือกเมนูในตารางออเดอร์ (เช่น หมูกรอบ, ไข่ดาว) */
+.item-options { color: #a83c6c; }
+
+/* ---------- แก้ตัวเลือกของเมนู (admin-options.js) ---------- */
+.options-editor { margin: 16px 0; padding: 14px; border: 1px solid #e9cbd9; border-radius: 12px; }
+.options-editor legend { padding: 0 6px; font-weight: bold; }
+.opt-group { margin-bottom: 12px; padding: 12px; background: #fff5f9; border: 1px solid #f3dbe6; border-radius: 10px; }
+.opt-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.opt-row input { flex: 1; }
+.opt-choice-row { padding-left: 18px; }
+.opt-choice-row input[type="number"] { flex: 0 0 90px; }
+.opt-check { display: inline-flex; align-items: center; gap: 6px; margin: 0 16px 8px 0; font-weight: normal; }
+.opt-check input { width: auto; }
+
+/* ---------- กระดานออเดอร์ 3 คอลัมน์ (admin-board.js) ---------- */
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+.board-column {
+    padding: 12px;
+    background: #fbf3f7;
+    border-radius: 14px;
+    border-top: 5px solid #e0c5d2;
+}
+.board-column.col-new     { border-top-color: #f0a500; }   /* ใหม่ = ส้ม */
+.board-column.col-cooking { border-top-color: #3b82f6; }   /* กำลังทำ = ฟ้า */
+.board-column.col-ready   { border-top-color: #22a35a; }   /* รอรับ = เขียว */
+.board-column h3 { display: flex; align-items: center; gap: 8px; margin: 2px 4px 12px; font-size: 17px; }
+.board-count {
+    min-width: 26px;
+    padding: 2px 8px;
+    color: white;
+    background: var(--pink-dark);
+    border-radius: 99px;
+    font-size: 13px;
+    text-align: center;
+}
+.board-empty { margin: 0; padding: 24px 8px; color: var(--muted); text-align: center; font-size: 14px; }
+
+/* การ์ดออเดอร์ */
+.order-card {
+    margin-bottom: 12px;
+    padding: 14px;
+    background: white;
+    border: 1px solid #ecd6e0;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+}
+.order-card.late { border: 2px solid #c62828; background: #fff6f6; }
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.card-queue { color: var(--pink-deep); font-size: 30px; font-weight: 800; letter-spacing: 1px; line-height: 1; }
+.card-customer { margin: 4px 0 10px; color: var(--muted); font-size: 13px; }
+
+/* รายการอาหารในการ์ด */
+.card-items { margin: 0; padding: 10px 0; list-style: none; border-top: 1px dashed #e3c9d5; border-bottom: 1px dashed #e3c9d5; }
+.card-items li { display: flex; gap: 10px; padding: 5px 0; }
+.card-qty { flex: none; min-width: 34px; color: var(--pink-deep); font-size: 18px; font-weight: 800; }
+.card-items b { display: block; font-size: 16px; }
+.card-options { display: block; color: #1d4ed8; font-weight: 700; font-size: 14px; }
+.card-note {
+    display: block;
+    margin-top: 4px;
+    padding: 4px 8px;
+    color: #7a5200;
+    background: #fff4d6;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+/* ชำระเงิน + ปุ่ม */
+.card-pay { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin: 10px 0; font-size: 13px; }
+.card-total { font-size: 18px; white-space: nowrap; }
+.card-actions { display: flex; gap: 8px; }
+.card-actions .btn { flex: 1; padding: 12px 10px; font-size: 15px; }
+.card-actions .btn.primary { flex: 2; }
+
+.history-toolbar { margin-top: 28px; }
+
+@media screen and (max-width: 900px) {
+    .board { grid-template-columns: 1fr; }
+}
