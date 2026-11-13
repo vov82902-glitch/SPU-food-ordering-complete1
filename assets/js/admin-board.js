@@ -160,18 +160,12 @@ function itemsListHtml(items) {
         if (item.options && item.options.length > 0) {
             html += '<ul class="card-options">';
             for (let j = 0; j < item.options.length; j++) {
-                // ตัวที่หมดและรอลูกค้าเลือกใหม่ -> ขีดฆ่า
-                let isOut = item.pendingChoice && item.pendingChoice.name === item.options[j].name &&
-                    item.pendingChoice.group === item.options[j].group;
-                html += '<li' + (isOut ? ' class="is-out"' : '') + '>' + esc(item.options[j].name) + '</li>';
+                html += '<li>' + esc(item.options[j].name) + '</li>';
             }
             html += '</ul>';
         }
 
-        // ของหมด (out-of-stock.js): รอลูกค้าเลือกใหม่ / ลูกค้าเปลี่ยนแล้ว
-        if (item.pendingChoice) {
-            html += '<span class="card-wait">⏳ ' + esc(item.pendingChoice.name) + 'หมด · รอลูกค้าเลือกใหม่</span>';
-        }
+        // ของหมด แล้วเปลี่ยนเป็นของแทนที่ลูกค้าเลือกไว้ (out-of-stock.js)
         if (item.changeNote) {
             html += '<span class="card-changed">🔄 ' + esc(item.changeNote) + '</span>';
         }
@@ -206,12 +200,7 @@ function cardButtons(order) {
                sideButton('cancel', '✕', 'ยกเลิก', 'danger', order);
     }
     if (order.status === 'cooking') {
-        // ยังรอลูกค้าเลือกของแทน -> ปุ่มบอกให้รอก่อน (out-of-stock.js)
-        if (hasPendingChoice(order)) {
-            main = '<button type="button" class="btn primary card-main" disabled>⏳ รอลูกค้าเลือกของแทน</button>';
-        } else {
-            main = mainButton('ready', 'ทำเสร็จ · เรียกลูกค้า', order);
-        }
+        main = mainButton('ready', 'ทำเสร็จ · เรียกลูกค้า', order);
         side = sideButton('stock', '🥕', 'ของหมด', 'warn', order) +
                sideButton('cancel', '✕', 'ยกเลิก', 'danger', order);
     }

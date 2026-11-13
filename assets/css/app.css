@@ -831,19 +831,6 @@ form[hidden], .reset-done[hidden] { display: none; }
 #cart-list p.option-line { color: var(--pink-deep); font-weight: 600; }
 #menu-list p.option-hint { color: var(--muted); font-size: 13px; }
 
-/* ---------- ของหมด: ลูกค้าเลือกของแทน (queue-choice.js) ---------- */
-.choice-box { margin: 0 18px 14px; padding: 12px 14px; background: var(--yellow-bg); border: 2px solid var(--orange); border-radius: 10px; }
-.content .choice-box p { margin: 0; }
-.content .choice-title { color: var(--yellow); font-weight: 700; font-size: 15px; }
-.content .choice-sub { margin-bottom: 6px !important; font-size: 13px; }
-.choice-row { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px solid #f3e3c0; cursor: pointer; }
-.choice-row input { width: 18px; height: 18px; accent-color: var(--pink-dark); }
-.choice-row span { flex: 1; color: var(--text); font-weight: 600; }
-.choice-row small { color: var(--muted); font-size: 13px; }
-.content .choice-time { margin-top: 8px !important; font-size: 13px; }
-.choice-actions { display: flex; gap: 8px; margin-top: 10px; }
-.content .btn-choice { flex: 2; }
-.choice-actions .btn-cancel { flex: 1; }
 .item-changed { display: block; width: 100%; color: var(--green); font-size: 13px; font-weight: 600; }
 .content p.item-removed { margin: 0 18px 10px; color: var(--red); font-size: 14px; font-weight: 600; }
 
@@ -872,3 +859,102 @@ form[hidden], .reset-done[hidden] { display: none; }
 }
 @keyframes sound-pulse { 50% { box-shadow: 0 8px 24px rgba(60,20,40,0.3), 0 0 0 8px rgba(232,121,168,0.35); } }
 @media (prefers-reduced-motion: reduce) { .sound-bar { animation: none; } }
+
+/* ---------- ถ้าของหมด จะให้ทำยังไง (if-out.js) ----------
+   ลำดับตามหน้าจอ: แถวในตะกร้า -> แผ่นเลือก (หัว, ปุ่มใหญ่, ของแทน, ปุ่มบันทึก) -> มือถือ */
+
+/* แถว "ถ้าของหมด: ..." ในการ์ดตะกร้า */
+.ifout-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: calc(100% - 32px);
+    margin: 4px 16px 0;
+    padding: 10px 12px;
+    color: var(--text);
+    background: var(--pink-pale);
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    font: inherit;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+}
+.ifout-row:hover { border-color: var(--pink); }
+.ifout-row b { color: var(--pink-deep); }
+.ifout-arrow { color: var(--muted); font-size: 20px; line-height: 1; }
+
+/* แผ่นเลือก: กล่อง + หัว (ชื่อเรื่อง, ชื่อจาน, ปุ่ม ✕) */
+.sheet-box { max-width: 460px; padding: 0; overflow: hidden; }
+.sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 20px 20px 14px; border-bottom: 1px solid var(--line); }
+.sheet-box .sheet-head p { margin: 2px 0 0; }
+.sheet-close { flex: none; width: 36px; height: 36px; color: var(--text); background: none; border: none; border-radius: 50%; font-size: 20px; cursor: pointer; }
+.sheet-close:hover { background: var(--pink-soft); }
+.sheet-box #ifout-list { max-height: 60vh; overflow-y: auto; }
+
+/* ปุ่มใหญ่: เปลี่ยนเป็นอย่างอื่น / ไม่เอาจานนี้ */
+.ifout-choice {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 16px 20px;
+    color: var(--text);
+    background: white;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.ifout-choice:last-child { border-bottom: none; }
+.ifout-choice:hover { background: var(--pink-pale); }
+.ifout-choice svg { flex: none; width: 26px; height: 26px; fill: none; stroke: var(--muted); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ifout-choice > span:not(.ifout-arrow) { flex: 1; }
+.ifout-choice b { display: block; font-size: 16px; }
+.ifout-choice small { display: block; margin-top: 2px; color: var(--muted); font-size: 13px; }
+.ifout-choice.is-on { background: var(--pink-soft); }
+.ifout-choice.is-on svg { stroke: var(--pink-dark); }
+.ifout-choice.is-on b, .ifout-choice.is-on .ifout-arrow { color: var(--pink-deep); }
+
+/* ของแทน (โผล่ใต้ "เปลี่ยนเป็นอย่างอื่น"): ปุ่มเม็ดยา */
+.ifout-backups { padding: 4px 20px 14px 60px; background: var(--pink-soft); border-bottom: 1px solid var(--line); }
+.sheet-box .ifout-backups p { margin: 10px 0 6px; color: var(--text); font-size: 14px; }
+.ifout-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.ifout-chip {
+    padding: 7px 14px;
+    color: var(--text);
+    background: white;
+    border: 1px solid var(--line-strong);
+    border-radius: 99px;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+.ifout-chip:hover { border-color: var(--pink); }
+.ifout-chip.is-on { color: white; background: var(--pink-dark); border-color: var(--pink-dark); font-weight: 600; }
+
+/* ปุ่มบันทึก */
+.sheet-foot { padding: 12px 20px 16px; border-top: 1px solid var(--line); }
+.btn-save {
+    width: 100%;
+    padding: 12px;
+    color: white;
+    background: var(--pink-dark);
+    border: none;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.btn-save:hover { background: var(--pink-deep); }
+
+/* มือถือ: แผ่นเลือกเลื่อนขึ้นจากล่างจอ */
+@media (max-width: 700px) {
+    .dialog.sheet { align-items: flex-end; padding: 0; }
+    .sheet-box { max-width: none; border-radius: 18px 18px 0 0; padding-bottom: env(safe-area-inset-bottom, 0px); animation: sheet-up 0.2s ease-out; }
+}
+@keyframes sheet-up { from { transform: translateY(100%); } }
+@media (prefers-reduced-motion: reduce) { .sheet-box { animation: none; } }

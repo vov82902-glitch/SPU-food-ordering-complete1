@@ -1,7 +1,7 @@
 /* ==========================================================
    queue.js — หน้าคิวของฉัน (queue.html)
    แสดงบัตรคิวทุกออเดอร์ของลูกค้า + แจ้งเตือนเมื่อร้านเปลี่ยนสถานะ
-   ต้องโหลดหลัง main.js, noshow.js, out-of-stock.js และ queue-choice.js
+   ต้องโหลดหลัง main.js และ noshow.js
 
    ข้อมูลเปลี่ยน (ร้านกดปุ่ม) -> cloud.js อัปเดต -> หน้านี้วาดใหม่เอง
    และวาดซ้ำทุก 3 วินาทีกันพลาด
@@ -17,7 +17,7 @@
 let user = getCurrentUser();   // { name, student } หรือ null ถ้ายังไม่ล็อกอิน
 
 let knownStatus = {};    // สถานะล่าสุดของแต่ละออเดอร์ (ไว้เทียบว่าเปลี่ยนไหม)
-let knownWaiting = {};   // แต่ละออเดอร์มีรายการรอเลือกของแทนกี่อย่าง (ของหมด)
+let knownChanges = {};   // แต่ละออเดอร์โดนของหมดไปกี่ครั้งแล้ว (เปลี่ยนของ / ตัดจาน)
 let firstRender = true;  // วาดครั้งแรกไม่ต้องเตือน
 
 // ขั้นตอนของออเดอร์ (แถบติดตามสถานะ)
@@ -75,9 +75,6 @@ function askNotify() {
    2. วาดบัตรคิวทั้งหมด
 ---------------------------------------------------------- */
 function renderQueue() {
-    // ของหมดแล้วไม่ได้เลือกใหม่ภายใน 3 นาที -> ระบบตัดสินใจให้ (out-of-stock.js)
-    expirePendingChoices(function (order) { return order.student === user.student; });
-
     let orders = loadOrders();
 
     // เอาเฉพาะออเดอร์ของเรา เรียงใหม่ไปเก่า
@@ -130,17 +127,19 @@ function notifyChanges(order) {
         }
     }
 
-    // 3.2 ร้านแจ้งของหมด (จำนวนรายการที่รอเลือกเพิ่มขึ้น = เพิ่งแจ้งมา)
-    let waiting = 0;
+    // 3.2 ของหมด -> ร้านเปลี่ยนของ / ตัดจาน ตามที่ลูกค้าเลือกไว้ (จำนวนครั้งเพิ่มขึ้น = เพิ่งเกิด)
+    //     นับจานที่ตัดออก + จำนวนลูกศร "→" ใน changeNote (จานเดียวอาจเปลี่ยนหลายรอบ)
+    let changes = (order.removed || []).length;
     for (let i = 0; i < order.items.length; i++) {
-        if (order.items[i].pendingChoice) waiting = waiting + 1;
+        changes = changes + (order.items[i].changeNote || '').split('→').length - 1;
     }
-    if (!firstRender && waiting > (knownWaiting[order.id] || 0)) {
-        showToast('คิว ' + queue + ': ของบางอย่างหมด กรุณาเลือกใหม่', 'bad');
+    // ออเดอร์ถูกยกเลิกทั้งใบ -> ข้อ 3.1 แจ้งไปแล้ว ไม่ต้องแจ้งซ้ำ
+    if (!firstRender && order.status !== 'cancelled' && changes > (knownChanges[order.id] || 0)) {
+        showToast('คิว ' + queue + ': ของบางอย่างหมด ร้านเปลี่ยนตามที่คุณเลือกไว้แล้ว', 'bad');
         beep(3);
-        desktopNotify('ของหมด คิว ' + order.queue, 'กรุณาเลือกของแทนในหน้าคิว');
+        desktopNotify('ของหมด คิว ' + order.queue, 'ร้านเปลี่ยนตามที่คุณเลือกไว้แล้ว ดูในหน้าคิว');
     }
-    knownWaiting[order.id] = waiting;
+    knownChanges[order.id] = changes;
 }
 
 
@@ -175,11 +174,10 @@ function ticketHtml(order, allOrders) {
     }
     html += '</ul>';
 
-    // ของหมด: รายการที่ถูกตัดออก + กล่องให้เลือกของแทน (queue-choice.js)
+    // ของหมด: จานที่ถูกตัดออก (out-of-stock.js)
     if (order.removed && order.removed.length > 0) {
         html += '<p class="item-removed">❌ ตัดออก: ' + esc(order.removed.join(', ')) + '</p>';
     }
-    html += choiceBoxHtml(order);
 
     // ยอดรวม + การจ่ายเงิน (เงินสดที่ร้านอย่างเดียว)
     html += '<div class="ticket-total"><span>รวม</span><b>' + order.total + ' บาท</b></div>';

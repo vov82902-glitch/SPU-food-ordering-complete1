@@ -850,8 +850,9 @@ tr.late td { background: var(--red-bg); }
 }
 
 /* ---------- ของหมด (admin-stock.js / out-of-stock.js) ---------- */
-.card-options li.is-out { color: var(--muted); text-decoration: line-through; }
-.card-wait, .card-changed {
+.card-changed {
+    color: var(--green);
+    background: var(--green-bg);
     display: inline-block;
     margin-top: 6px;
     padding: 4px 10px;
@@ -859,8 +860,6 @@ tr.late td { background: var(--red-bg); }
     font-size: 13px;
     font-weight: 700;
 }
-.card-wait { color: var(--blue); background: var(--blue-bg); }
-.card-changed { color: var(--green); background: var(--green-bg); }
 .card-removed { margin: 4px 0 6px; padding: 6px 10px; color: var(--red); background: var(--red-bg); border-radius: 8px; font-size: 13px; font-weight: 600; }
 
 .stock-dialog {

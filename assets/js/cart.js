@@ -81,6 +81,7 @@ function showCart() {
         html += '<p>' + esc(item.store) + ' ชั้น ' + esc(item.floor) + '</p>';
         if (item.note) html += '<p class="note-box">หมายเหตุ: ' + esc(item.note) + '</p>';
         html += '<p>' + item.price + ' บาท / จาน</p>';
+        html += ifOutRowHtml(item, i);   // ถ้าของหมด จะให้ทำยังไง (if-out.js)
 
         // ปุ่ม − จำนวน + และลบ
         html += '<div class="qty">';
@@ -156,6 +157,8 @@ function placeOrder() {
             store: found.store.name,
             floor: found.store.floorId,
             note: item.note,
+            ifOut: item.ifOut === 'swap' ? 'swap' : 'remove',   // ถ้าของหมด: เปลี่ยน / ไม่เอาจานนี้ (if-out.js)
+            backups: item.ifOut === 'swap' ? (item.backups || []) : [],   // ของแทนที่เลือกไว้
             quantity: item.quantity
         });
     }

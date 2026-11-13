@@ -48,7 +48,23 @@
             <button id="order-button" onclick="placeOrder()">ยืนยันสั่งอาหาร</button>
         </div>
     </main>
+    <!-- แผ่นเลือก "ถ้าของหมด จะให้ทำยังไง?" (ควบคุมด้วย if-out.js) -->
+    <div id="ifout-sheet" class="dialog sheet" hidden>
+        <div class="dialog-box sheet-box" role="dialog" aria-modal="true" aria-labelledby="ifout-title">
+            <div class="sheet-head">
+                <div>
+                    <h3 id="ifout-title">ถ้าของหมด จะให้ทำยังไง?</h3>
+                    <p id="ifout-dish"></p>
+                </div>
+                <button type="button" id="ifout-close" class="sheet-close" aria-label="ปิด">✕</button>
+            </div>
+            <div id="ifout-list"></div>
+            <div class="sheet-foot">
+                <button type="button" id="ifout-save" class="btn-save">บันทึก</button>
+            </div>
+        </div>
+    </div>
     <footer class="site-footer"><b>SPU Food Ordering</b> · จ่ายเงินสดที่ร้าน</footer>
-    <script src="assets/js/cloud.js" data-load="assets/js/main.js assets/js/noshow.js assets/js/cart.js"></script>
+    <script src="assets/js/cloud.js" data-load="assets/js/main.js assets/js/noshow.js assets/js/if-out.js assets/js/cart.js"></script>
 </body>
 </html>

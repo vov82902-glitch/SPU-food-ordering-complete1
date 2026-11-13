@@ -303,6 +303,34 @@ function findChoice(menu, groupTitle, choiceName) {
     return null;
 }
 
+// หากลุ่มตัวเลือกจากชื่อกลุ่ม เช่น 'เลือกเนื้อสัตว์' (ไม่เจอ = null)
+function findGroup(menu, groupTitle) {
+    let groups = menu.options || [];
+    for (let g = 0; g < groups.length; g++) {
+        if (groups[g].title === groupTitle) return groups[g];
+    }
+    return null;
+}
+
+// รายการอาหารนี้เลือกตัวเลือกนี้ไว้หรือยัง
+function hasOption(item, groupTitle, choiceName) {
+    let options = item.options || [];
+    for (let i = 0; i < options.length; i++) {
+        if (options[i].group === groupTitle && options[i].name === choiceName) return true;
+    }
+    return false;
+}
+
+// ของแทนที่ลูกค้าเลือกไว้ เผื่อ option นี้หมด (if-out.js) · ไม่ได้เลือก = null
+// หน้าตา: { group: 'เลือกเนื้อสัตว์', from: 'ทะเล', to: 'ไก่' }  (to = '' แปลว่า "ไม่ใส่")
+function findBackup(item, option) {
+    let backups = item.backups || [];
+    for (let i = 0; i < backups.length; i++) {
+        if (backups[i].group === option.group && backups[i].from === option.name) return backups[i];
+    }
+    return null;
+}
+
 function saveFoodData() {
     localStorage.setItem('food_data', JSON.stringify(foodData));
     if (window.cloudSave) cloudSave('food_data', foodData);   // ส่งขึ้น Firebase (cloud.js)

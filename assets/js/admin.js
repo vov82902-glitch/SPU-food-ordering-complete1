@@ -4,7 +4,7 @@
 
    หน้าร้านแบ่งงานเป็นหลายไฟล์ (โหลดก่อนไฟล์นี้ ตามลำดับใน admin.html):
    - noshow.js        กติกาลูกค้าไม่มารับ
-   - out-of-stock.js  กติกาของหมด -> ลูกค้าเลือกของแทน
+   - out-of-stock.js  กติกาของหมด -> ทำตามที่ลูกค้าเลือกไว้ตอนสั่ง
    - order-timer.js   นับถอยหลัง + เตือนออเดอร์ที่ร้านยังไม่รับ
    - admin-options.js แก้ตัวเลือกเมนู (หมู/ไก่)
    - admin-stock.js   หน้าต่าง "ของหมด"
@@ -323,11 +323,6 @@ function orderAct(act, id) {
         renderAll();
         return;
     }
-    // ยังรอลูกค้าเลือกของแทนอยู่ -> ห้ามกดทำเสร็จ (ร้านยังไม่รู้ว่าต้องใส่อะไร)
-    if (act === 'ready' && hasPendingChoice(o)) {
-        adminToast('คิว ' + o.queue + ' ยังรอลูกค้าเลือกของแทน (ไม่เกิน ' + CHOOSE_MINUTES + ' นาที)');
-        return;
-    }
     if (act === 'stock') { openStockDialog(o); return; }   // ของหมด -> เปิดหน้าต่างเลือก (admin-stock.js)
     if (act === 'cancel') { openCancelDialog(o); return; } // ยกเลิก -> เปิดหน้าต่างเลือกเหตุผล (admin-cancel.js)
     if (act === 'accept') { o.status = 'cooking'; o.acceptedAt = now; }
@@ -354,9 +349,7 @@ function orderAct(act, id) {
 
 // เรียกคิวถัดไป: คิวที่กำลังทำเก่าสุด (ถ้าไม่มี ใช้คิวใหม่เก่าสุด) -> พร้อมรับ
 function callNextQueue() {
-    // ข้ามคิวที่ยังรอลูกค้าเลือกของแทน (out-of-stock.js)
-    let orders = adminOrders().filter(function (o) { return !hasPendingChoice(o); })
-        .sort(function (a, b) { return a.createdAt - b.createdAt; });
+    let orders = adminOrders().sort(function (a, b) { return a.createdAt - b.createdAt; });
     let next = orders.find(function (o) { return o.status === 'cooking'; }) ||
                orders.find(function (o) { return o.status === 'new'; });
     if (!next) { adminToast('ไม่มีคิวที่รออยู่'); return; }
@@ -384,7 +377,7 @@ function menuAct(act, id) {
     if (act === 'toggle') {
         menu.available = menu.available === false;
         saveMenus();
-        if (menu.available === false) notifyOutOfStock();   // ตั้งเป็นหมด -> แจ้งลูกค้าที่สั่งไว้ (admin-stock.js)
+        if (menu.available === false) notifyOutOfStock();   // ตั้งเป็นหมด -> แก้ออเดอร์ตามที่ลูกค้าเลือกไว้ (admin-stock.js)
     }
     if (act === 'edit') openMenuForm(menu);
     if (act === 'delete') {
@@ -472,7 +465,7 @@ function saveMenuForm(event) {
     adminStore = findStore(adminStore.id);
     renderAll();
     adminToast('บันทึกเมนูแล้ว');
-    notifyOutOfStock();   // ถ้าติ๊กตัวเลือกไหนเป็น "หมด" -> แจ้งลูกค้าที่สั่งไว้ (admin-stock.js)
+    notifyOutOfStock();   // ถ้าติ๊กตัวเลือกไหนเป็น "หมด" -> แก้ออเดอร์ตามที่ลูกค้าเลือกไว้ (admin-stock.js)
 }
 
 /* ---------- 10. ตั้งค่า ---------- */
