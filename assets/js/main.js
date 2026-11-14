@@ -77,127 +77,18 @@ let foodData = [
                         image: "https://placehold.co/400x240?text=Food+2"
                     }
                 ]
-            },
-            {
-                id: 2,
-                name: 'ร้านก๋วยเตี๋ยว',
-                image: "https://placehold.co/400x240?text=Shop+2",
-                menus: [
-                    {
-                        name: 'ก๋วยเตี๋ยวหมู',
-                        price: 40,
-                        image: "https://placehold.co/400x240?text=Food+3",
-                        options: [
-                            {
-                                title: 'เลือกเส้น',
-                                required: true,
-                                multiple: false,
-                                choices: [
-                                    { name: 'เส้นเล็ก', price: 0 },
-                                    { name: 'เส้นใหญ่', price: 0 },
-                                    { name: 'บะหมี่', price: 0 },
-                                    { name: 'วุ้นเส้น', price: 0 }
-                                ]
-                            },
-                            {
-                                title: 'ขนาด',
-                                required: true,
-                                multiple: false,
-                                choices: [
-                                    { name: 'ธรรมดา', price: 0 },
-                                    { name: 'พิเศษ', price: 10 }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        name: 'ก๋วยเตี๋ยวต้มยำ',
-                        price: 45,
-                        image: "https://placehold.co/400x240?text=Food+4"
-                    }
-                ]
             }
         ]
     },
     {
         id: 2,
         name: 'ชั้น 2',
-        stores: [
-            {
-                id: 3,
-                name: 'ร้านข้าวมันไก่',
-                image: "https://placehold.co/400x240?text=Shop+3",
-                menus: [
-                    {
-                        name: 'ข้าวมันไก่ต้ม',
-                        price: 45,
-                        image: "https://placehold.co/400x240?text=Food+5"
-                    },
-                    {
-                        name: 'ข้าวมันไก่ทอด',
-                        price: 50,
-                        image: "https://placehold.co/400x240?text=Food+6"
-                    }
-                ]
-            },
-            {
-                id: 4,
-                name: 'ร้านน้ำ',
-                image: "https://placehold.co/400x240?text=Shop+4",
-                menus: [
-                    {
-                        name: 'ชาไทย',
-                        price: 25,
-                        image: "https://placehold.co/400x240?text=Food+7"
-                    },
-                    {
-                        name: 'โกโก้เย็น',
-                        price: 30,
-                        image: "https://placehold.co/400x240?text=Food+8"
-                    }
-                ]
-            }
-        ]
+        stores: []
     },
     {
         id: 3,
         name: 'ชั้น 3',
-        stores: [
-            {
-                id: 5,
-                name: 'ร้านอาหารอีสาน',
-                image: "https://placehold.co/400x240?text=Shop+5",
-                menus: [
-                    {
-                        name: 'ส้มตำไทย',
-                        price: 40,
-                        image: "https://placehold.co/400x240?text=Food+9"
-                    },
-                    {
-                        name: 'ข้าวเหนียวไก่ย่าง',
-                        price: 55,
-                        image: "https://placehold.co/400x240?text=Food+10"
-                    }
-                ]
-            },
-            {
-                id: 6,
-                name: 'ร้านข้าวหมูทอด',
-                image: "https://placehold.co/400x240?text=Shop+6",
-                menus: [
-                    {
-                        name: 'ข้าวหมูทอด',
-                        price: 45,
-                        image: "https://placehold.co/400x240?text=Food+11"
-                    },
-                    {
-                        name: 'ข้าวหมูกระเทียม',
-                        price: 45,
-                        image: "https://placehold.co/400x240?text=Food+12"
-                    }
-                ]
-            }
-        ]
+        stores: []
     }
 ];
 

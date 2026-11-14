@@ -536,8 +536,12 @@ document.addEventListener('click', function (e) {
 });
 
 window.addEventListener('storage', function (e) {
-    if (!adminStore || (e.key && e.key.indexOf('food_') !== 0)) return;
-    if (e.key === 'food_data' || !e.key) { loadFoodData(); adminStore = findStore(adminStore.id); }
+    if (e.key && e.key.indexOf('food_') !== 0) return;
+    // อัปเดตเมนูในหน่วยความจำเสมอ แม้ยังไม่ล็อกอิน (เช่น เปิดหน้าสมัครร้านค้างไว้)
+    // ไม่งั้นตอนบันทึกจะเอาข้อมูลเก่าทับขึ้น Firebase ร้านที่ถูกลบจะกลับมา
+    if (e.key === 'food_data' || !e.key) loadFoodData();
+    if (!adminStore) return;
+    if (e.key === 'food_data' || !e.key) adminStore = findStore(adminStore.id);
     lastOrdersRaw = null;
     checkChanges();
     if (lastOrdersRaw === null) renderAll();
@@ -654,6 +658,8 @@ function registerShop(event) {
     let pin = $('reg-shop-pin').value.trim();
     let pin2 = $('reg-shop-pin2').value.trim();
 
+    loadFoodData();   // ใช้รายชื่อร้านล่าสุดเสมอ (กันข้อมูลเก่าในหน้าที่เปิดค้างไว้ทับขึ้น Firebase)
+
     let taken = allStores().some(function (s) { return s.name.toLowerCase() === name.toLowerCase(); });
     let ok = true;
     ok = regError('reg-shop-name', name.length < 2 ? 'กรุณากรอกชื่อร้าน' : taken ? 'มีร้านชื่อนี้ในระบบแล้ว' : '') && ok;
@@ -669,7 +675,10 @@ function registerShop(event) {
     }
 
     // สร้างร้านใหม่ในข้อมูลกลาง
-    let newId = allStores().reduce(function (mx, s) { return Math.max(mx, s.id); }, 0) + 1;
+    // id ใหม่ต้องไม่ซ้ำร้านที่เคยมี (รวมร้านที่ถูกลบไปแล้ว) ไม่งั้นจะได้ออเดอร์/ตั้งค่าของร้านเก่ามา
+    let usedIds = allStores().map(function (s) { return s.id; })
+        .concat(Object.keys(getStoreConfigs()).map(Number));
+    let newId = Math.max.apply(null, usedIds.concat([0])) + 1;
     let floor = foodData.find(function (f) { return f.id === floorId; });
     floor.stores.push({ id: newId, name: name, image: '', menus: [] });
     try { saveFoodData(); } catch (e) {
