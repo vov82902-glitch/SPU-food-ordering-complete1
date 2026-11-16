@@ -134,6 +134,21 @@
     let cloudText = {};    // { collection: { docId: stable(data) } }
     let pending = [];      // งานบันทึกที่ยังส่งไม่เสร็จ
 
+    // เริ่มต้นด้วยข้อมูลที่มีในเครื่อง (จนกว่า Firestore จะส่งของจริงมาแทน)
+    // ไม่งั้นถ้าเน็ตช้าแล้วผู้ใช้กดบันทึกก่อนข้อมูลมา cloudSave จะคิดว่า "ทุกอย่างเปลี่ยน"
+    // แล้วส่งข้อมูลเก่าทั้งก้อนขึ้นไปทับ (เช่น ออเดอร์ที่ร้านกดพร้อมแล้วกลับเป็น "ใหม่", ร้านที่ปิดกลับมาเปิด)
+    Object.keys(KEYS).forEach(function (key) {
+        let local = null;
+        try { local = JSON.parse(localStorage.getItem(key)); } catch (e) { local = null; }
+        if (local == null) return;
+        let docs = KEYS[key].toDocs(local);
+        Object.keys(docs).forEach(function (col) {
+            cloudData[col] = docs[col];
+            cloudText[col] = {};
+            Object.keys(docs[col]).forEach(function (id) { cloudText[col][id] = stable(docs[col][id]); });
+        });
+    });
+
     // เอาข้อมูลจาก Firestore ไปเขียนลง localStorage ของ key นี้
     function writeLocal(key) {
         let spec = KEYS[key];
@@ -247,7 +262,12 @@
         db = firebase.firestore();
         // ใช้ long polling แทนสตรีม: แอนตี้ไวรัส/ตัวบล็อกโฆษณา/เน็ตมหาลัยบางที่ตัดสตรีมทิ้ง
         // -> โหลดครั้งแรกค้างจนหมดเวลา และไม่ได้อัปเดตแบบเรียลไทม์
-        db.settings({ experimentalForceLongPolling: true, merge: true });
+        // (ต้องปิด AutoDetect เอง เพราะ Firebase v10 เปิดไว้เป็นค่าเริ่มต้น และห้ามเปิดพร้อมกัน)
+        try {
+            db.settings({ experimentalForceLongPolling: true, experimentalAutoDetectLongPolling: false });
+        } catch (e) {
+            console.warn('[cloud] ตั้งค่า long polling ไม่ได้ ใช้ค่าเริ่มต้นแทน', e);
+        }
         // เก็บแคชในเครื่อง: งานที่ยังส่งไม่เสร็จจะถูกส่งต่อแม้เปลี่ยนหน้า
         return db.enablePersistence({ synchronizeTabs: true }).catch(function (err) {
             console.warn('[cloud] ใช้แคชในเครื่องไม่ได้', err.code);
