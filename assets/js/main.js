@@ -26,59 +26,7 @@ let foodData = [
     {
         id: 1,
         name: 'ชั้น 1',
-        stores: [
-            {
-                id: 1,
-                name: 'ร้านอาหารตามสั่ง',
-                image: "https://placehold.co/400x240?text=Shop+1",
-                menus: [
-                    {
-                        name: 'ข้าวผัดกะเพรา',
-                        price: 45,
-                        image: "https://placehold.co/400x240?text=Food+1",
-                        // ตัวเลือกของเมนู (ดูคำอธิบายใน menu-options.js)
-                        // required: true = ต้องเลือก / multiple: true = เลือกได้หลายอย่าง
-                        options: [
-                            {
-                                title: 'เลือกเนื้อสัตว์',
-                                required: true,
-                                multiple: false,
-                                choices: [
-                                    { name: 'หมูสับ', price: 0 },
-                                    { name: 'ไก่', price: 0 },
-                                    { name: 'หมูกรอบ', price: 10 },
-                                    { name: 'ทะเล', price: 20 }
-                                ]
-                            },
-                            {
-                                title: 'เพิ่มเติม',
-                                required: false,
-                                multiple: true,
-                                choices: [
-                                    { name: 'ไข่ดาว', price: 10 },
-                                    { name: 'ไข่เจียว', price: 10 }
-                                ]
-                            },
-                            {
-                                title: 'ระดับความเผ็ด',
-                                required: true,
-                                multiple: false,
-                                choices: [
-                                    { name: 'ไม่เผ็ด', price: 0 },
-                                    { name: 'เผ็ดน้อย', price: 0 },
-                                    { name: 'เผ็ดมาก', price: 0 }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        name: 'ข้าวผัดหมู',
-                        price: 45,
-                        image: "https://placehold.co/400x240?text=Food+2"
-                    }
-                ]
-            }
-        ]
+        stores: []
     },
     {
         id: 2,

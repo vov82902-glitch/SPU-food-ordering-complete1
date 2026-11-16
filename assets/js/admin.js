@@ -677,7 +677,8 @@ function registerShop(event) {
     // สร้างร้านใหม่ในข้อมูลกลาง
     // id ใหม่ต้องไม่ซ้ำร้านที่เคยมี (รวมร้านที่ถูกลบไปแล้ว) ไม่งั้นจะได้ออเดอร์/ตั้งค่าของร้านเก่ามา
     let usedIds = allStores().map(function (s) { return s.id; })
-        .concat(Object.keys(getStoreConfigs()).map(Number));
+        .concat(Object.keys(getStoreConfigs()).map(Number))
+        .concat(loadOrders().map(function (o) { return Number(o.storeId) || 0; }));
     let newId = Math.max.apply(null, usedIds.concat([0])) + 1;
     let floor = foodData.find(function (f) { return f.id === floorId; });
     floor.stores.push({ id: newId, name: name, image: '', menus: [] });
