@@ -11,6 +11,13 @@ if (user === null) {
 } else {
     updateCartBadge();   // ตัวเลขตะกร้ามุมขวาบน (main.js)
     showStores();
+
+    // ข้อมูลเปลี่ยนแบบเรียลไทม์ (cloud.js) -> วาดใหม่ เช่น ร้านเปิด/ปิด
+    window.addEventListener('storage', function (e) {
+        if (e.key === 'food_data') loadFoodData();
+        if (!e.key || e.key === 'food_data' || e.key === 'food_stores') showStores();
+        if (!e.key || e.key === 'food_cart') updateCartBadge();
+    });
 }
 
 

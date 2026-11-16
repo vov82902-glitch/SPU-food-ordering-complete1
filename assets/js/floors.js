@@ -12,6 +12,13 @@ if (user === null) {
     showHeader();
     showWelcomeNote();
     showFloorList();
+
+    // ข้อมูลเปลี่ยนแบบเรียลไทม์ (cloud.js) -> วาดใหม่ เช่น ร้านเปิด/ปิด, เพิ่ม/ลบร้าน
+    window.addEventListener('storage', function (e) {
+        if (e.key === 'food_data') loadFoodData();
+        if (!e.key || e.key === 'food_data' || e.key === 'food_stores') showFloorList();
+        if (!e.key || e.key === 'food_cart') updateCartBadge();
+    });
 }
 
 

@@ -23,10 +23,22 @@ if (user === null) {
     updateCartBadge();   // ตัวเลขตะกร้ามุมขวาบน (main.js)
     findSelectedStore();
     showMenus();
+
+    // ข้อมูลเปลี่ยนแบบเรียลไทม์ (cloud.js) -> วาดใหม่ เช่น ร้านปิด, เมนูหมด, ราคาเปลี่ยน
+    window.addEventListener('storage', function (e) {
+        if (e.key === 'food_data') {
+            loadFoodData();
+            findSelectedStore();   // foodData เป็นชุดใหม่ ต้องหาร้านใหม่
+        }
+        if (!e.key || e.key === 'food_data' || e.key === 'food_stores') showMenus();
+        if (!e.key || e.key === 'food_cart') updateCartBadge();
+    });
 }
 
 // อ่านรหัสร้านจากลิงก์ เช่น menu.html?store=1 แล้วหาร้านกับชั้นของร้านนั้น
 function findSelectedStore() {
+    selectedStore = null;
+    selectedFloor = null;
     let storeId = Number(new URLSearchParams(location.search).get('store'));
     for (let i = 0; i < foodData.length; i++) {
         for (let j = 0; j < foodData[i].stores.length; j++) {
@@ -44,6 +56,13 @@ function findSelectedStore() {
 ---------------------------------------------------------- */
 function showMenus() {
     let list = document.getElementById('menu-list');
+
+    // วาดใหม่ระหว่างเปิดหน้า: จำหมายเหตุที่พิมพ์ค้างไว้ (ตามรหัสเมนู) + ลบป้าย "ร้านปิด" อันเก่า
+    let notes = {};
+    list.querySelectorAll('form[data-menu-id]').forEach(function (form) {
+        if (form.elements.note && form.elements.note.value) notes[form.dataset.menuId] = form.elements.note.value;
+    });
+    document.querySelectorAll('.closed-note').forEach(function (el) { el.remove(); });
 
     if (selectedStore === null) {
         list.innerHTML = '<p class="empty-note">ไม่พบร้านอาหาร</p>';
@@ -67,6 +86,12 @@ function showMenus() {
         html += menuCardHtml(selectedStore.menus[i], i, open);
     }
     list.innerHTML = html;
+
+    // ใส่หมายเหตุที่พิมพ์ค้างไว้กลับคืน
+    list.querySelectorAll('form[data-menu-id]').forEach(function (form) {
+        let note = notes[form.dataset.menuId];
+        if (note && form.elements.note && !form.elements.note.disabled) form.elements.note.value = note;
+    });
 }
 
 // การ์ดเมนู 1 ใบ (index = ลำดับเมนูในร้าน ใช้ตอนกดเพิ่มลงตะกร้า)
@@ -75,7 +100,7 @@ function menuCardHtml(menu, index, open) {
     let canOrder = open && menu.available !== false && !requiredOptionsSoldOut(menu);
     let disabled = canOrder ? '' : ' disabled';
 
-    let html = '<form class="box' + (menu.available === false ? ' is-soldout' : '') + '" onsubmit="addToCart(event, this, ' + index + ')">';
+    let html = '<form class="box' + (menu.available === false ? ' is-soldout' : '') + '" data-menu-id="' + esc(String(menu.id)) + '" onsubmit="addToCart(event, this, ' + index + ')">';
     if (menu.image) html += '<img src="' + esc(menu.image) + '" alt="ภาพตัวอย่างอาหาร">';
 
     html += '<h3>' + esc(menu.name) + '</h3>';
@@ -109,7 +134,7 @@ function addToCart(event, form, index) {
     // ตรวจอีกครั้ง เผื่อร้านปิดหรือเมนูหมดระหว่างเปิดหน้าไว้
     if (!getStoreConfigs()[selectedStore.id].open || menu.available === false) {
         alert('ขออภัย ตอนนี้สั่งเมนูนี้ไม่ได้');
-        location.reload();
+        showMenus();   // วาดใหม่ให้เห็นสถานะล่าสุด ไม่ต้องรีโหลดทั้งหน้า
         return;
     }
 

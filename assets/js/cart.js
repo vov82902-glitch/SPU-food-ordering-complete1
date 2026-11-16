@@ -23,6 +23,16 @@ if (user === null) {
 } else {
     updateCartBadge();
     showCart();
+
+    // ข้อมูลเปลี่ยนแบบเรียลไทม์ (cloud.js) -> วาดใหม่ เช่น ร้านปิด, เมนูหมด, ราคาเปลี่ยน
+    window.addEventListener('storage', function (e) {
+        if (e.key === 'food_data') loadFoodData();
+        if (e.key === 'food_cart') cart = loadCart();   // แก้ตะกร้าจากอีกแท็บ
+        if (!e.key || ['food_data', 'food_stores', 'food_orders', 'food_cart'].indexOf(e.key) !== -1) {
+            updateCartBadge();
+            showCart();
+        }
+    });
 }
 
 
@@ -102,10 +112,8 @@ function showCart() {
 
     // สั่งไม่ได้ถ้า: โดนพักเพราะไม่มารับ / ค้างรับเยอะเกิน (noshow.js)
     let blocked = orderBlockReason(user.student);
-    if (blocked !== '') {
-        document.getElementById('block-note').textContent = blocked;
-        document.getElementById('block-note').hidden = false;
-    }
+    document.getElementById('block-note').textContent = blocked;
+    document.getElementById('block-note').hidden = blocked === '';
 
     document.getElementById('order-button').disabled = cart.length === 0 || problem || blocked !== '';
 }
@@ -118,7 +126,8 @@ function changeQuantity(index, amount) {
     cart[index].quantity = cart[index].quantity + amount;
     if (cart[index].quantity <= 0) cart.splice(index, 1);   // เหลือ 0 -> เอาออกจากตะกร้า
     saveCart(cart);
-    location.reload();
+    updateCartBadge();
+    showCart();   // วาดใหม่ทันที ไม่ต้องรีโหลดทั้งหน้า
 }
 
 
@@ -134,7 +143,7 @@ function placeOrder() {
 
     // ตรวจอีกครั้งตอนกดสั่ง เผื่อสถานะเปลี่ยนระหว่างเปิดหน้าไว้
     let blocked = orderBlockReason(user.student);
-    if (blocked !== '') { alert(blocked); location.reload(); return; }
+    if (blocked !== '') { alert(blocked); showCart(); return; }
 
     // 1) จัดกลุ่มของในตะกร้าตามร้าน: { รหัสร้าน: { store, items } }
     let groups = {};
@@ -144,7 +153,7 @@ function placeOrder() {
         let price = found.menu ? priceWithOptions(found.menu, item.options) : null;   // ราคาจริง ณ ตอนกดสั่ง
 
         let warn = itemProblem(found, price);
-        if (warn !== '') { alert(item.name + ': ' + warn); location.reload(); return; }
+        if (warn !== '') { alert(item.name + ': ' + warn); showCart(); return; }
 
         let storeId = found.store.id;
         if (!groups[storeId]) groups[storeId] = { store: found.store, items: [] };

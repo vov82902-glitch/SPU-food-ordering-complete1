@@ -245,6 +245,9 @@
     function connect() {
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
+        // ใช้ long polling แทนสตรีม: แอนตี้ไวรัส/ตัวบล็อกโฆษณา/เน็ตมหาลัยบางที่ตัดสตรีมทิ้ง
+        // -> โหลดครั้งแรกค้างจนหมดเวลา และไม่ได้อัปเดตแบบเรียลไทม์
+        db.settings({ experimentalForceLongPolling: true, merge: true });
         // เก็บแคชในเครื่อง: งานที่ยังส่งไม่เสร็จจะถูกส่งต่อแม้เปลี่ยนหน้า
         return db.enablePersistence({ synchronizeTabs: true }).catch(function (err) {
             console.warn('[cloud] ใช้แคชในเครื่องไม่ได้', err.code);
